@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/Users/krisnailafat/cheria-apps/cheriaholidays/android/app/build/intermediates/res/merged/debug/xml/preferences.xml",
+        "source": "/Users/krisnailafat/cheria-apps/cheriaholidays/android/app/build/intermediates/exploded-aar/com.facebook.react/react-native/0.49.5/res/xml/preferences.xml"
+    },
+    {
+        "merged": "/Users/krisnailafat/cheria-apps/cheriaholidays/android/app/build/intermediates/res/merged/debug/xml/provider_paths.xml",
+        "source": "/Users/krisnailafat/cheria-apps/cheriaholidays/android/app/build/intermediates/exploded-aar/cheriaholidays/react-native-image-picker/unspecified/res/xml/provider_paths.xml"
+    }
+]

@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "cheria-halal-travel",
+  "private_key_id": "797ffabf10df5378b8176373241e104c1a702019",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCHC1ThSB9L9VH1\nE9q2/XIFwveF09u1TKXa+dmnuKEV4i1VZyJsTq3LA8i/T469zROlgAbCd06LNr3g\nKrlglq6IyaVXBo4cZliO6W+gBNGRYwxHvfPKYbmKPG2fVaHV6JdDSHXmLQF+G83p\n7gewtndaDihV1JooC0Cf1wIzkSEqrgfNfs2fiFP0mTPLR5vDxV9yIPV7rvQCoWYv\nCz6hb91Vj0KLaAmBEXM11xxqhUUsxoQJ0ZBiMgNy0cCzeQIjs7b1DELcP+MzYdnq\nUcrfWNvVNlA+xOVRi0GruHT93Lsg7Lk46LsS+NlN06z7aTXgNAfM+PNGRx2lhpkk\nGVYtigp7AgMBAAECggEAATViQJPfJ9Rds+ZGFk4lV5TblziCplg1wcRrpLsbwfDg\nu/tszPBVUNRLVx70pZEwxFHlfZcIvmkygM+REiK3FCVN0/4MhoeJ8ll3dMSmRXlP\n8lJqXJzMRsbsqjjfdmUa+XCsEW/ErCa+jIHjUrsHTWiEBuScrpAPN376l5CMbe/W\ncRU/7+e76gWCu/hTHN7QmzM6XXnY32aI9bw4WrWZ1zw8sl6mZDcy42rwOuQ2N+xN\nh5F0kqeRx2shtWOhs9fcLiqDXMUDLIwLnCDb64i32i5kKCZTNgb/72Sp2RphIWfb\nbe3xHS4Crt3HmxDZHFm3HSHXmnIEg8YXHRsRCBfXkQKBgQC6SlUDsR6JF1pzheY4\nCp9MHKm+DxmEPFzl37fLNBcG7HssHl+fT5VkguZIOr0BD8Z+CMuhfQNX+kAqM+eX\n5bzufOhl4eT01b3B8yHQjDNrizmXLNDk51lbHG62Vg3receVEeqV9+21oaikneW5\nH2mmBnYL/d9uN8qWOWNyxuLMywKBgQC5k+JqDfvgW9v+Qrxcb6HUeRyd6OPaK1rS\nsCXMgFqPxVyS/xrZ/ihsthJft/3n9J2dvV/Jvu1xpEGnuwAGTB9dvJWOSWoDukyC\nZIqHI4I96ynAePjdH66IwvgEKLDPT2qdXutbZTEsdMAa+8KzchSZtmFoy0xsFRTi\nv9sl5UozEQKBgDJ4Dt4oLwie/g9MGFnYbt206jumZZhQri5M1MNFgnOKv7ftJqTH\nb8bCO9cXqrrN5k2g3mIKt0wvbRDB7R1WzT+jMWbgsyGtgnI4B1IzmX6qQlj1eEZ7\nctbfNhNJ7w17eZmmN/KXL5xEhqbKbEEiBIJJP9Px3IVEsirOs2WWAj3PAoGADJbp\nv0QfmELjE8a3PJYeJmno9RV9j6ltSenFRrBWdHZxJ0/DJJLHb0iSyoeS5A+GOdNF\nEkyvkwwPoC9hewvi/Nr0UmjMlmAnHJlxhGV2SnkPpg0O5QFnN8PyS2XvSMEcfHyZ\n/uNIiLmK5sm5la7hkuP6i79u+c4cUp2tYk7Bz+ECgYEAt6Llu7MPksdzW7U8HZ5G\n2AMbd3OCunlhfGqhSDfXcetfQkBG6mKu3wa8jiLymFOZlh/xMcomFIbPSsel0XQh\n8SayIOjuLLMA2kfQJ2mp/m98keO6KhPwg3RM2g2ZKolyUwijf+8RqegpKgshaTf9\njpOEHb+Tx+3+wAONeanN/sI=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-9b4ag@cheria-halal-travel.iam.gserviceaccount.com",
+  "client_id": "105444079712758062656",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-9b4ag%40cheria-halal-travel.iam.gserviceaccount.com"
+}
