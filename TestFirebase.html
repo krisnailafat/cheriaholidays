@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+<script>
+    console.log('testing firebase')
+    var key = 'AIzaSyAq43hgQavqULlawyVoxUK-VWiMZv0gWzs';
+    var to = 'dOL5sUUXkq4:APA91bEuRmqf8_O-hyW5zWQYxkw_ooxX6nLmQ7ulRarbB8gWOVCoqZOXzNfhFTQ7PXg-ZLYlBIHixAP02KfDxA__CItID7zNcztuwYBfQ0_mpDsh64RilknNxSdrZ2Djw2PPVZSL5cMx0umzsFoYGQUYKrxujGRY3w';
+    //var to = '09ba8b1a0ef1fa59'
+    var notification = {
+        'title': 'Testing',
+        'body': 'Halo Kris',
+        'icon': 'firebase-logo.png',
+        'click_action': 'MESSAGING_EVENT'
+    };
+
+    fetch('https://fcm.googleapis.com/fcm/send', {
+        'method': 'POST',
+        'headers': {
+            'Authorization': 'key=' + key,
+            'Content-Type': 'application/json'
+        },
+        'body': JSON.stringify({
+            'notification': notification,
+            'foreground': false,
+            'to': to,
+            'data': notification
+        })
+    }).then(function(response) {
+        console.log(response);
+    }).catch(function(error) {
+        console.error(error);
+    })
+</script>
+</html>
