@@ -114,10 +114,10 @@ class AuthScreen extends Component {
             valid:
               key === "password"
                 ? validate(
-                    prevState.controls.confirmPassword.value,
-                    prevState.controls.confirmPassword.validationRules,
-                    connectedValue
-                  )
+                  prevState.controls.confirmPassword.value,
+                  prevState.controls.confirmPassword.validationRules,
+                  connectedValue
+                )
                 : prevState.controls.confirmPassword.valid
           },
           [key]: {
@@ -210,7 +210,7 @@ class AuthScreen extends Component {
               <View
                 style={
                   this.state.viewMode === "portrait" ||
-                  this.state.authMode === "login"
+                    this.state.authMode === "login"
                     ? styles.portraitPasswordContainer
                     : styles.landscapePasswordContainer
                 }
@@ -218,7 +218,7 @@ class AuthScreen extends Component {
                 <View
                   style={
                     this.state.viewMode === "portrait" ||
-                    this.state.authMode === "login"
+                      this.state.authMode === "login"
                       ? styles.portraitPasswordWrapper
                       : styles.landscapePasswordWrapper
                   }
