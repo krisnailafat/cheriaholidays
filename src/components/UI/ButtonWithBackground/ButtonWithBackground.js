@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Platform
 } from "react-native";
+import { TextNormal, TextBold, TextMedium, TextSemiBold } from '../TextCustom/TextCustom'
 
 const buttonWithBackground = props => {
   const content = (
@@ -17,9 +18,9 @@ const buttonWithBackground = props => {
         props.disabled ? styles.disabled : null
       ]}
     >
-      <Text style={props.disabled ? styles.disabledText : null}>
+      <TextMedium style={props.disabled ? styles.disabledText : { color: '#ffffff' }}>
         {props.children}
-      </Text>
+      </TextMedium>
     </View>
   );
   if (props.disabled) {
@@ -37,16 +38,20 @@ const buttonWithBackground = props => {
 
 const styles = StyleSheet.create({
   button: {
-    padding: 10,
-    margin: 5,
-    borderRadius: 5
+    // padding: 10,
+    // margin: 5,
+    height: 40,
+    width: '100%',
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: 'center'
   },
   disabled: {
     backgroundColor: "#eee",
     borderColor: "#aaa"
   },
   disabledText: {
-    color: "#aaa"
+    color: "#757575"
   }
 });
 

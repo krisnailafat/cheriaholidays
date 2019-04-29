@@ -16,6 +16,7 @@ export const startTourPackage = () => {
                 screen: {
                     screen: "cheria-holidays.TourPackage",
                     title: "All Tour Package",
+                    label:'All Tour Package',
                     navigatorButtons: {
                         leftButtons: [
                             {
@@ -31,10 +32,11 @@ export const startTourPackage = () => {
                         screen: "cheria-holidays.SideDrawer"
                     }
                 },
-                appStyle: {
-                    navBarTextColor:"#490E14",
-                    navBarButtonColor:"#490E14"
-                },
+                // appStyle: {
+                //     navBarTextColor:"#490E14",
+                //     navBarButtonColor:"#490E14"
+                // },
+
             });
         })
 

@@ -8,19 +8,20 @@ const tourList = props => {
         <FlatList
             style={styles.listContainer}
             data={props.tours}
-            keyExtractor={(item, index) => index}
+            keyExtractor={(item, index) => index.toString()}
             renderItem={(info) =>
                 (
-                <ListItem
-                    tourName={info.item.name}
-                    tourImage={info.item.images}
-                    day={info.item.day_duration}
-                    night={info.item.night_duration}
-                    price_adult={info.item.price_adult}
-                    currency = {info.item.currency}
-                    onItemPressed={() => props.onItemSelected(info.item)}
-                />
-            )}
+                    <ListItem
+                        point={info.item.poin}
+                        tourName={info.item.name}
+                        tourImage={info.item.images}
+                        day={info.item.day_duration}
+                        night={info.item.night_duration}
+                        price_adult={info.item.price_adult}
+                        currency={info.item.currency}
+                        onItemPressed={() => props.onItemSelected(info.item)}
+                    />
+                )}
         />
     );
 };

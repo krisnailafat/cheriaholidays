@@ -13,3 +13,13 @@ export const AUTH_REMOVE_TOKEN = "AUTH_REMOVE_TOKEN";
 
 export const START_REQUEST_TOUR = "REQUEST_SET_TOKEN";
 
+
+export const SET_PROFILE = "SET_PROFILE";
+export const SET_LOGIN = "SET_LOGIN";
+export const SET_LOGGED = "SET_LOGGED";
+export const SET_PEMBELIAN = "SET_PEMBELIAN";
+
+
+export const SET_LOKASI = "SET_LOKASI";
+
+export const RESET_POINT = "RESET_POINT";

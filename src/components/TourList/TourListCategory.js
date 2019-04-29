@@ -8,15 +8,17 @@ const tourList = props => {
         <FlatList
             style={styles.listContainer}
             data={props.tours}
-            keyExtractor={(item, index) => index}
+            showsVerticalScrollIndicator={false}
+            keyExtractor={(item, index) => index.toString()}
             renderItem={(info) =>
                 (
-                <ListItemCategory
-                    tourName={info.item.name}
-                    tourImage={info.item.images}
-                    onItemPressed={() => props.onItemSelected(info.item)}
-                />
-            )}
+                    <ListItemCategory
+                        tourName={info.item.name}
+                        tourImage={info.item.images}
+                        onItemPressed={() => props.onItemSelected(info.item)}
+                    />
+                )
+            }
         />
     );
 };

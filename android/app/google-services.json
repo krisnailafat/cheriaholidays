@@ -1,27 +1,27 @@
 {
   "project_info": {
-    "project_number": "642286517439",
-    "firebase_url": "https://cheria-halal-travel.firebaseio.com",
-    "project_id": "cheria-halal-travel",
-    "storage_bucket": "cheria-halal-travel.appspot.com"
+    "project_number": "90037462932",
+    "firebase_url": "https://cheria-holiday-app.firebaseio.com",
+    "project_id": "cheria-holiday-app",
+    "storage_bucket": "cheria-holiday-app.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:642286517439:android:09ba8b1a0ef1fa59",
+        "mobilesdk_app_id": "1:90037462932:android:09ba8b1a0ef1fa59",
         "android_client_info": {
           "package_name": "com.cheriaholidays"
         }
       },
       "oauth_client": [
         {
-          "client_id": "642286517439-mpkndpof2tb0mtglk8lqptkh2sfog3gb.apps.googleusercontent.com",
+          "client_id": "90037462932-5rvq4dl80drp9aub00r3kqskdoe40218.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDRPP1QCN2MK_RCdsZQN02ZXQnx3YsefMc"
+          "current_key": "AIzaSyAMjI2v3SSZWURpbpPjyFLz1_zQVhGQ_Nc"
         }
       ],
       "services": {

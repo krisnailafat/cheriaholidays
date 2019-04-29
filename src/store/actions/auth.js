@@ -1,61 +1,138 @@
-import { AsyncStorage } from "react-native";
+import { AsyncStorage, Alert } from "react-native";
 
 import { TRY_AUTH, AUTH_SET_TOKEN, AUTH_REMOVE_TOKEN } from "./actionTypes";
-import { uiStartLoading, uiStopLoading, startTourPackage } from "./index";
+import { uiStartLoading, uiStopLoading, startTourPackage, resetPoint } from "./index";
 import startMainTabs from "../../screens/MainTabs/startMainTabs";
 import { Navigation } from 'react-native-navigation';
 import App from "../../../App";
 
-const API_KEY = "AIzaSyDtxe0lf6OzfdqxAJyd_SUc1uQ-Y7BB194";
-
+// const API_KEY = "AIzaSyDtxe0lf6OzfdqxAJyd_SUc1uQ-Y7BB194";
+const API_KEY = "AIzaSyBInLZ8SvB_NcF5jHC390qsyB6DNrw4ENc";
 export const tryAuth = (authData, authMode) => {
   return dispatch => {
     dispatch(uiStartLoading());
-    let url =
-      "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=" +
-      API_KEY;
+    let url = ''
     if (authMode === "signup") {
-      url =
-        "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=" +
-        API_KEY;
-    }
-    fetch(url, {
-      method: "POST",
-      body: JSON.stringify({
-        email: authData.email,
-        password: authData.password,
-        returnSecureToken: true
-      }),
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
-      .catch(err => {
-        console.log(err);
-        alert("Cek Koneksi Anda! Pastikan sudah tersambung internet");
-        dispatch(uiStopLoading());
-      })
-      .then(res => res.json())
-      .then(parsedRes => {
-        dispatch(uiStopLoading());
-        console.log(parsedRes);
-        if (!parsedRes.idToken) {
-          alert("Authentikasi gagal, Silahkan coba lagi!");
-        } else {
-          //simpen email
-          AsyncStorage.setItem("ap:auth:email", authData.email);
-          dispatch(
-            authStoreToken(
-              parsedRes.idToken,
-              parsedRes.expiresIn,
-              parsedRes.refreshToken
-            )
-          );
-          startMainTabs();
-            //console.log('authentikasi berhasil')
-          //startTourPackage();
+      //generate automatic random ref_code_user
+      let random = Math.floor((Math.random() * 100) + 1)
+
+      url = 'https://travelfair.co/auth/users/'
+      fetch(url, {
+        method: "POST",
+        body: JSON.stringify({
+          email: authData.email,
+          password: authData.password,
+          phone: authData.phone,
+          referral_code: authData.referral_code,
+          ref_code_user: authData.email.split('@', 1)[0].toUpperCase() + '_' + random,
+          returnSecureToken: true
+        }),
+        headers: {
+          "Content-Type": "application/json"
         }
+      })
+        .catch(err => {
+          console.log(err);
+          alert("Cek Koneksi Anda! Pastikan sudah tersambung internet");
+          dispatch(uiStopLoading());
+        })
+        .then(res => res.json())
+        .then(parsedRes => {
+          dispatch(uiStopLoading());
+          console.log('result:', parsedRes);
+
+          if (parsedRes.id != undefined) {
+            Alert.alert(
+              'SUKSES',
+              'Terima Kasih telah menggunakan aplikasi Halal Traveler.\nSilahkan menikmati layanan yang ada!',
+              [
+                {
+                  text: 'OK', onPress: () => {
+                    AsyncStorage.setItem("ap:auth:email", authData.email);
+                    AsyncStorage.setItem("ap:auth:password", authData.password);
+                    AsyncStorage.setItem("ap:auth:token", parsedRes.auth_token)
+
+                    Navigation.startSingleScreenApp({
+                      screen: {
+                        screen: "cheria-holidays.AuthScreen",
+                        title: "Login"
+                      }
+                    });
+                  }
+                },
+              ],
+              { cancelable: false }
+            )
+          } else {
+            let message = ''
+            if (parsedRes.email != undefined) {
+              message = ''
+              for (i = 0; i < parsedRes.email.length; i++) {
+                message = message + '\n' + parsedRes.email[i]
+              }
+            } else {
+              message = ''
+              for (i = 0; i < parsedRes.password.length; i++) {
+                message = message + '\n' + parsedRes.password[i]
+              }
+            }
+            Alert.alert('REGISTRASI GAGAL', message)
+          }
+
+
+        });
+    } else {
+      const promise = new Promise((resolve, reject) => {
+        url = 'https://travelfair.co/auth/token/login/';
+        console.log('data', authData)
+        fetch(url, {
+          method: "POST",
+          body: JSON.stringify({
+            // email: 'krisnaciheul@gmail.com',
+            // password: 'krisna123456',
+            email: authData.email,
+            password: authData.password,
+          }),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+          .catch(err => {
+            console.log(err);
+            alert("Cek Koneksi Anda! Pastikan sudah tersambung internet");
+            reject();
+            dispatch(uiStopLoading());
+          })
+          .then(res => res.json())
+          .then(parsedRes => {
+            dispatch(uiStopLoading());
+            console.log('login result:', parsedRes);
+
+            if (parsedRes.auth_token != undefined) {
+              AsyncStorage.setItem("ap:auth:email", authData.email);
+              AsyncStorage.setItem("ap:auth:password", authData.password);
+              AsyncStorage.setItem("ap:auth:token", parsedRes.auth_token)
+              AsyncStorage.setItem("ap:logged", 'true')
+              // dispatch(a)
+              // startMainTabs();
+              resolve();
+            } else {
+              Alert.alert("Username & Password yang Anda masukan salah")
+              reject();
+            }
+            dispatch(uiStopLoading());
+
+          }).catch(err => {
+            console.log(err);
+            alert("Gagal terhubung dengan server, Coba kembali");
+            reject();
+            dispatch(uiStopLoading());
+          });
       });
+      return promise
+
+    }
+
   };
 };
 
@@ -74,7 +151,7 @@ export const authSetToken = (token, expiryDate) => {
   return {
     type: AUTH_SET_TOKEN,
     token: token,
-    expiryDate: expiryDate
+    // expiryDate: expiryDate
   };
 };
 
@@ -164,8 +241,12 @@ export const authAutoSignIn = () => {
 
 export const authClearStorage = () => {
   return dispatch => {
+    AsyncStorage.removeItem("ap:auth:email");
+    AsyncStorage.removeItem("ap:auth:password");
     AsyncStorage.removeItem("ap:auth:token");
     AsyncStorage.removeItem("ap:auth:expiryDate");
+    AsyncStorage.removeItem("ap:logged");
+    // AsyncStorage.removeItem("ap:auth:refreshToken");
     return AsyncStorage.removeItem("ap:auth:refreshToken");
   };
 };
@@ -173,17 +254,18 @@ export const authClearStorage = () => {
 export const authLogout = () => {
   return dispatch => {
     console.log('1')
+    dispatch(resetPoint())
     dispatch(authClearStorage())
-        .then(() => {
-            // startMainTabs();
-            Navigation.startSingleScreenApp({
-                screen: {
-                    screen: "cheria-holidays.AuthScreen",
-                    title: "Login"
-                }
-            });
-      //App();
-    }).catch(err => console.log(err))
+      .then(() => {
+        startMainTabs();
+        // Navigation.startSingleScreenApp({
+        //   screen: {
+        //     screen: "cheria-holidays.OnBoarding",
+        //     title: "Login"
+        //   }
+        // });
+        //App();
+      }).catch(err => console.log(err))
     console.log('2')
     dispatch(authRemoveToken());
   };
