@@ -29,6 +29,13 @@ export class TextMedium extends Component {
         )
     }
 }
+export class TextSedgwick extends Component {
+    render() {
+        return (
+            <Text {...this.props} style={[styles.sedgwick, this.props.style]}>{this.props.children}</Text>
+        )
+    }
+}
 const styles = StyleSheet.create({
     normal: {
         fontFamily: 'EncodeSans-Regular',
@@ -44,5 +51,8 @@ const styles = StyleSheet.create({
     },
     medium: {
         fontFamily: 'EncodeSans-Medium',
+    },
+    sedgwick: {
+        fontFamily: 'SedgwickAveDisplay-Regular'
     }
 });

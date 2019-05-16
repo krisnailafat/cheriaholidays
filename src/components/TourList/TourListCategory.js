@@ -16,6 +16,7 @@ const tourList = props => {
                         tourName={info.item.name}
                         tourImage={info.item.images}
                         onItemPressed={() => props.onItemSelected(info.item)}
+                        tourIndex={info.index}
                     />
                 )
             }

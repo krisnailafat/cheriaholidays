@@ -22,6 +22,7 @@ import { TextNormal, TextBold, TextMedium, TextSemiBold } from "../../components
 //custom icon
 import { createIconSetFromFontello, createIconSetFromIcoMoon } from 'react-native-vector-icons';
 import icoMoonConfig from '../../assets/selection.json'
+import { startMainMenu } from "../../store/actions";
 const Ico = createIconSetFromIcoMoon(icoMoonConfig);
 //custom icon
 
@@ -62,12 +63,13 @@ class LupaPassword extends Component {
                     [
                         {
                             text: 'OK', onPress: () => {
-                                Navigation.startSingleScreenApp({
-                                    screen: {
-                                        screen: "cheria-holidays.AuthScreen",
-                                        title: "Login"
-                                    }
-                                });
+                                this.props.goToMainMenu()
+                                // Navigation.startSingleScreenApp({
+                                //     screen: {
+                                //         screen: "cheria-holidays.AuthScreen",
+                                //         title: "Login"
+                                //     }
+                                // });
                             }
                         },
                     ],
@@ -82,7 +84,7 @@ class LupaPassword extends Component {
             <View style={styles.container}>
                 <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                     <View style={{ paddingVertical: 0, width: "90%" }}>
-                    {/* Text input email */}
+                        {/* Text input email */}
                         <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', marginBottom: 20 }}>
                             <View style={{ width: '10%' }}>
                                 <Ico name='email' size={25} color='#3EBA49' />
@@ -145,4 +147,10 @@ const styles = StyleSheet.create({
     },
 })
 
-export default connect(null, null)(LupaPassword);
+const mapDispatchToProps = dispatch => {
+    return {
+        goToMainMenu: () => dispatch(startMainMenu())
+    };
+};
+
+export default connect(null, mapDispatchToProps)(LupaPassword);

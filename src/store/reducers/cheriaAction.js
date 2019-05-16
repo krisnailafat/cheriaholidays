@@ -1,9 +1,11 @@
 import { SET_PROFILE, SET_LOGIN, SET_LOGGED, SET_PEMBELIAN, RESET_POINT } from "../actions/actionTypes";
 
 const initialState = {
-    profile: null,
+    // profile: null,
+    profile: {},
     isLogin: false,
-    pembelian: null,
+    // pembelian: null,
+    pembelian: [],
     point: 0
 };
 

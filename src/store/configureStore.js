@@ -19,6 +19,7 @@ const rootReducer = combineReducers({
   point: cheriaActionReducer,
 
   lokasi: muslimActionReducer,
+  lokasiGoogle: muslimActionReducer
 });
 
 let composeEnhancers = compose;

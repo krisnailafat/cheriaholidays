@@ -21,5 +21,6 @@ export const SET_PEMBELIAN = "SET_PEMBELIAN";
 
 
 export const SET_LOKASI = "SET_LOKASI";
+export const SET_LOKASIGOOGLE = "SET_LOKASIGOOGLE"
 
 export const RESET_POINT = "RESET_POINT";

@@ -2,14 +2,14 @@ import React, { Component } from 'react';
 import { connect } from "react-redux";
 import {
     View, Text, AsyncStorage, ActivityIndicator, StyleSheet, ScrollView, Modal, TouchableOpacity, TextInput, Alert, FlatList,
-    BackHandler, DeviceEventEmitter, Dimensions
+    BackHandler, DeviceEventEmitter, Dimensions, Image
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LocationServicesDialogBox from "react-native-android-location-services-dialog-box";
 import ProgressiveImage from "../../components/UI/ProgressiveImage/ProgressiveImage"
 import { TextSemiBold, TextNormal, TextMedium } from '../../components/UI/TextCustom/TextCustom';
 import MaterialIcons from "react-native-vector-icons/MaterialIcons"
-import { requestLokasi } from '../../store/actions/muslimAction';
+import { requestLokasi, requestLokasiGoogle } from '../../store/actions/muslimAction';
 import Share, { ShareSheet, Button } from 'react-native-share';
 
 import firebase from 'react-native-firebase';
@@ -62,7 +62,8 @@ class JadwalSolat extends Component {
         modalVisibleJadwalDua: false,
         kota: null,
         hasilKota: null,
-        modalVisible: false
+        modalVisible: false,
+        isBoxJadwal: true
     };
 
     onNavigatorEvent(event) {
@@ -77,39 +78,96 @@ class JadwalSolat extends Component {
         }
         switch (event.id) {
 
-            case 'didAppear':
-                // this.componentWillMount()
-                if (this.state.latitude == null && this.state.longitude == null) {
-                    this.aktifJadwal()
-                    // this.notifikasiSchedule()
-                    console.log('jadwal aktif')
-                } else {
-                    console.log('jadwal tidak perlu aktif')
-                }
-                break;
-            case 'didDisappear':
-                // this.componentWillUnmount()
-                console.log("jadwal dead")
-                break;
+            // case 'didAppear':
+            //     // this.componentWillMount()
+            //     if (this.state.latitude == null && this.state.longitude == null) {
+            //         this.aktifJadwal()
+            //         // this.notifikasiSchedule()
+            //         console.log('jadwal aktif')
+            //     } else {
+            //         console.log('jadwal tidak perlu aktif')
+            //     }
+            //     break;
+            // case 'didDisappear':
+            //     // this.componentWillUnmount()
+            //     console.log("jadwal dead")
+            //     break;
         }
     }
 
-    componentWillReceiveProps(props) {
-        console.log(props)
-        if (props.lokasi !== null) {
-            // let lokaiKota = props.lokasi.city
-            this.setState({ kota: props.lokasi.city })
-        }
-    }
+    // componentWillReceiveProps(props) {
+    //     console.log(props)
+    //     if (props.lokasi !== null) {
+    //         // let lokaiKota = props.lokasi.city
+    //         this.setState({ kota: props.lokasi.city })
+    //     }
+    // }
 
-    componentWillMount() {
+    componentWillMount = async () => {
         // this.aktifJadwal()
+        var that = this;
+
+        Promise.all([
+            latitude = await AsyncStorage.getItem('ap:latitude').then((value) => {
+                return value
+            }),
+            longitude = await AsyncStorage.getItem('ap:longitude').then((value) => {
+                return value
+            })
+        ]).then(function (values) {
+            console.log('latitude', values[0]);
+            console.log('longitude', values[1]);
+            if (values[0] == null && values[1] == null) {
+                that.aktifJadwal()
+                // this.notifikasiSchedule()
+                console.log('jadwal aktif')
+            } else {
+                console.log('jadwal tidak perlu aktif')
+                that.props.onSetLokasiGoogle(values[0], values[1]).then(response => {
+                    console.log('onSetLokasiGoogle ', response)
+                    if (!that.props.isLoading) {
+                        const results = response.results;
+                        for (var i = 0; i < results.length; i++) {
+
+                            if (results[i].types[0] === "locality") {
+                                that.dataJadwalSholat(values[0], values[1])
+                                that.setState({ kota: results[i].address_components[0].short_name })
+
+                                console.log("ini ", (results[i].address_components[0].short_name).toLowerCase())
+                            }
+                            else if (results[i].types[0] === "administrative_area_level_2") {
+                                that.dataJadwalSholat(values[0], values[1])
+                                that.setState({ kota: results[i].address_components[0].short_name })
+                            }
+                        }
+                    }
+                })
+                    .catch(err => {
+                        Alert.alert(`${err}`, `Silahkan coba kembali`,
+                            [
+                                { text: 'OK', onPress: () => that.setState({ isBoxJadwal: true, isLoading: false }) },
+                            ]);
+                        // console.log('error fetchLocation, ', err)
+                        // console.error('error fetchLocation, ', err)
+                        // throw err;
+                    })
+            }
+        });
+
+    }
+
+    fetchLatlon = async () => {
+        const latitude = await AsyncStorage.getItem('ap:latitude').then((value) => {
+            console.log(value)
+            return value
+        })
 
     }
 
     componentWillUnmount() {
         // used only when "providerListener" is enabled
         LocationServicesDialogBox.stopListener(); // Stop the "locationProviderStatusChange" listener.
+        // this.aktifJadwal()
     }
 
 
@@ -162,10 +220,16 @@ class JadwalSolat extends Component {
             }
         }
         const channelDevice = await AsyncStorage.getItem('ap:channelDevice').then((value) => {
-            console.log(value)
+            // console.log(value)
             return value
         })
-        console.log(channelDevice)
+        console.log('channelDevice, ', channelDevice.toString())
+        const channels = new firebase.notifications.Android.Channel(
+            channelDevice.toString(),
+            'Channel personal',
+            firebase.notifications.Android.Importance.Max
+        ).setDescription('Notif jadwal salat');
+        firebase.notifications().android.createChannel(channels);
 
         var dt = new Date();
         var secs = dt.getSeconds() + (60 * (dt.getMinutes() + (60 * dt.getHours())));
@@ -183,6 +247,7 @@ class JadwalSolat extends Component {
         console.log('hasil akhir subuh', resultSubuh)
         const dateSubuh = new Date();
         dateSubuh.setSeconds(dateSubuh.getSeconds() + resultSubuh);
+        // dateSubuh.setSeconds(dateSubuh.getSeconds() + 5);
         console.log(dateSubuh.getTime())
 
         const localNotificationSubuh = new firebase.notifications.Notification({
@@ -192,8 +257,9 @@ class JadwalSolat extends Component {
         })
             .setNotificationId('id_subuh')
             .setTitle('Waktunya solat')
+            .setSubtitle('subuh')
             .setBody('Mari laksanakan solat Subuh')
-            .android.setChannelId(channelDevice) // e.g. 
+            .android.setChannelId(channelDevice.toString()) // e.g. 
             .android.setSmallIcon('ic_notif_new') // create this icon in Android Studio
             .android.setColor('#3EBA49') // you can set a color here
             .android.setPriority(firebase.notifications.Android.Priority.High);
@@ -228,6 +294,12 @@ class JadwalSolat extends Component {
             return value
         })
         console.log(channelDevice)
+        const channels = new firebase.notifications.Android.Channel(
+            channelDevice.toString(),
+            'Channel personal',
+            firebase.notifications.Android.Importance.Max
+        ).setDescription('Notif jadwal salat');
+        firebase.notifications().android.createChannel(channels);
 
         var dt = new Date();
         var secs = dt.getSeconds() + (60 * (dt.getMinutes() + (60 * dt.getHours())));
@@ -245,6 +317,7 @@ class JadwalSolat extends Component {
         console.log('hasil akhir dzuhur', resultDzuhur)
         const dateDzuhur = new Date();
         dateDzuhur.setSeconds(dateDzuhur.getSeconds() + resultDzuhur);
+        // dateDzuhur.setSeconds(dateDzuhur.getSeconds() + 10);
         console.log(dateDzuhur.getTime())
 
         const localNotificationDzuhur = new firebase.notifications.Notification({
@@ -255,7 +328,7 @@ class JadwalSolat extends Component {
             .setNotificationId('id_dzuhur')
             .setTitle('Waktunya solat')
             .setBody('Mari laksanakan solat Dzuhur')
-            .android.setChannelId(channelDevice) // e.g. 
+            .android.setChannelId(channelDevice.toString()) // e.g. 
             .android.setSmallIcon('ic_notif_new') // create this icon in Android Studio
             .android.setColor('#3EBA49') // you can set a color here
             .android.setPriority(firebase.notifications.Android.Priority.High);
@@ -290,6 +363,12 @@ class JadwalSolat extends Component {
             return value
         })
         console.log(channelDevice)
+        const channels = new firebase.notifications.Android.Channel(
+            channelDevice.toString(),
+            'Channel personal',
+            firebase.notifications.Android.Importance.Max
+        ).setDescription('Notif jadwal salat');
+        firebase.notifications().android.createChannel(channels);
 
         var dt = new Date();
         var secs = dt.getSeconds() + (60 * (dt.getMinutes() + (60 * dt.getHours())));
@@ -317,7 +396,7 @@ class JadwalSolat extends Component {
             .setNotificationId('id_ashar')
             .setTitle('Waktunya solat')
             .setBody('Mari laksanakan solat Ashar')
-            .android.setChannelId(channelDevice) // e.g. 
+            .android.setChannelId(channelDevice.toString()) // e.g. 
             .android.setSmallIcon('ic_notif_new') // create this icon in Android Studio
             .android.setColor('#3EBA49') // you can set a color here
             .android.setPriority(firebase.notifications.Android.Priority.High);
@@ -354,6 +433,12 @@ class JadwalSolat extends Component {
             return value
         })
         console.log(channelDevice)
+        const channels = new firebase.notifications.Android.Channel(
+            channelDevice.toString(),
+            'Channel personal',
+            firebase.notifications.Android.Importance.Max
+        ).setDescription('Notif jadwal salat');
+        firebase.notifications().android.createChannel(channels);
 
         var dt = new Date();
         var secs = dt.getSeconds() + (60 * (dt.getMinutes() + (60 * dt.getHours())));
@@ -379,7 +464,7 @@ class JadwalSolat extends Component {
             .setNotificationId('id_magrib')
             .setTitle('Waktunya solat')
             .setBody('Mari laksanakan solat Magrib')
-            .android.setChannelId(channelDevice) // e.g. 
+            .android.setChannelId(channelDevice.toString()) // e.g. 
             .android.setSmallIcon('ic_notif_new') // create this icon in Android Studio
             .android.setColor('#3EBA49') // you can set a color here
             .android.setPriority(firebase.notifications.Android.Priority.High);
@@ -416,6 +501,12 @@ class JadwalSolat extends Component {
             return value
         })
         console.log(channelDevice)
+        const channels = new firebase.notifications.Android.Channel(
+            channelDevice.toString(),
+            'Channel personal',
+            firebase.notifications.Android.Importance.Max
+        ).setDescription('Notif jadwal salat');
+        firebase.notifications().android.createChannel(channels);
 
         var dt = new Date();
         var secs = dt.getSeconds() + (60 * (dt.getMinutes() + (60 * dt.getHours())));
@@ -441,7 +532,7 @@ class JadwalSolat extends Component {
             .setNotificationId('id_isya')
             .setTitle('Waktunya solat')
             .setBody('Mari laksanakan solat Isya')
-            .android.setChannelId(channelDevice) // e.g. 
+            .android.setChannelId(channelDevice.toString()) // e.g. 
             .android.setSmallIcon('ic_notif_new') // create this icon in Android Studio
             .android.setColor('#3EBA49') // you can set a color here
             .android.setPriority(firebase.notifications.Android.Priority.High);
@@ -472,23 +563,43 @@ class JadwalSolat extends Component {
                 let initialPosition = JSON.stringify(position);
                 console.log("ini hasilnya", position.coords.longitude)
                 this.setState({ longitude: position.coords.longitude, latitude: position.coords.latitude });
-                this.props.onSetLokasi(position.coords.latitude, position.coords.longitude).then(val => {
+                // this.props.onSetLokasi(position.coords.latitude, position.coords.longitude).then(val => {
+                //     if (!this.props.isLoading) {
+                //         console.log(val)
+                //         if (val.success !== false) {
+                //             this.dataJadwalSholat()
+                //             this.setState({ kota: val.city, staddress: val.staddress })
+                //         } else {
+                //             this.props.onSetLokasi(position.coords.latitude, position.coords.longitude).then(val => {
+                //                 this.dataJadwalSholat()
+                //                 this.setState({ kota: val.city, staddress: val.staddress })
+                //             })
+                //         }
+                //     }
+                // })
+                this.props.onSetLokasiGoogle(position.coords.latitude, position.coords.longitude).then(response => {
+                    console.log('onSetLokasiGoogle ', response)
                     if (!this.props.isLoading) {
-                        console.log(val)
-                        if (val.success !== false) {
-                            this.dataJadwalSholat()
-                            this.setState({ kota: val.city, staddress: val.staddress })
-                        } else {
-                            this.props.onSetLokasi(position.coords.latitude, position.coords.longitude).then(val => {
-                                this.dataJadwalSholat()
-                                this.setState({ kota: val.city, staddress: val.staddress })
-                            })
+                        const results = response.results;
+                        for (var i = 0; i < results.length; i++) {
+
+                            if (results[i].types[0] === "locality") {
+                                this.dataJadwalSholat(position.coords.latitude, position.coords.longitude)
+                                this.setState({ kota: results[i].address_components[0].short_name })
+
+                                console.log("ini ", (results[i].address_components[0].short_name).toLowerCase())
+                            }
+                            else if (results[i].types[0] === "administrative_area_level_2") {
+                                this.dataJadwalSholat(position.coords.latitude, position.coords.longitude)
+                                this.setState({ kota: results[i].address_components[0].short_name })
+                            }
                         }
                     }
                 })
             }, error => {
                 console.log(error)
-                this.aktifJadwal()
+                this.setState({ isBoxJadwal: true, isLoading: false })
+                // this.aktifJadwal()
                 // Alert.alert(
                 //     'Lokasi tidak ditemukan',
                 //     'Coba kembali',
@@ -497,14 +608,20 @@ class JadwalSolat extends Component {
                 //     ],
                 //     // { cancelable: false }
                 // )
-            }, { enableHighAccuracy: false, timeout: 20000, maximumAge: 1000 });
+            }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 });
         }.bind(this)
         ).catch((error) => {
             Alert.alert(
                 'Lokasi tidak ditemukan',
                 'Coba kembali',
                 [
-                    { text: 'OK', onPress: () => this.props.navigator.switchToTab({ tabIndex: 0 }) },
+                    // { text: 'OK', onPress: () => this.props.navigator.switchToTab({ tabIndex: 0 }) },
+                    {
+                        text: 'OK', onPress: () =>
+                            this.props.navigator.dismissModal({
+                                animationType: 'fade' // 'none' / 'slide-down' , dismiss animation for the modal (optional, default 'slide-down')
+                            })
+                    },
                 ],
                 // { cancelable: false }
             )
@@ -519,7 +636,7 @@ class JadwalSolat extends Component {
         });
     }
 
-    dataJadwalSholat = () => {
+    dataJadwalSholat = (lat, lon) => {
         var today = new Date();
         var dd = today.getDate();
         var mm = today.getMonth() + 1; //January is 0!
@@ -534,37 +651,31 @@ class JadwalSolat extends Component {
         }
 
         today = dd + '-' + mm + '-' + yyyy;
-        let url = "http://api.aladhan.com/v1/timings/" + today + "?latitude=" + this.state.latitude + "&longitude=" + this.state.longitude + "&method=2";
-        AsyncStorage.getItem("ap:auth:email").then((value) => {
-            this.setState({ "email": value });
-        })
-            .then(res => {
-                fetch(url, {
-                    credentials: 'include',
-                    method: 'GET',
-                })
-                    .catch(err => {
-                        console.log(err);
-                        //Alert("Error accessing mitratel server");
-                        this.setState({ errorMessage: err, isLoading: false })
-                        //dispatch(uiStopLoading());
-                    })
-                    .then(res => res.json())
-                    .then(parsedRes => {
-                        //dispatch(uiStopLoading());
-                        console.log('jadwal: ', parsedRes);
-                        this.setState({ jadwal: parsedRes, isLoading: false })
-                        navigator.geolocation.clearWatch(this.watchId);
-                        this.notifikasiScheduleSubuh(parsedRes.data.timings.Fajr)
-                        this.notifikasiScheduleDzuhur(parsedRes.data.timings.Dhuhr)
-                        this.notifikasiScheduleAshar(parsedRes.data.timings.Asr)
-                        this.notifikasiScheduleMaghrib(parsedRes.data.timings.Maghrib)
-                        this.notifikasiScheduleIsya(parsedRes.data.timings.Isha)
-                        // this.dzuhurSchedule(this.state.jadwal.data.timings.Asr)
-                    });
+        let url = "http://api.aladhan.com/v1/timings/" + today + "?latitude=" + lat + "&longitude=" + lon + "&method=5";
 
+        fetch(url, {
+            credentials: 'include',
+            method: 'GET',
+        })
+            .catch(err => {
+                console.log(err);
+                //Alert("Error accessing mitratel server");
+                this.setState({ errorMessage: err, isLoading: false })
+                //dispatch(uiStopLoading());
             })
-            .catch(err => Alert.alert("Error", err))
+            .then(res => res.json())
+            .then(parsedRes => {
+                //dispatch(uiStopLoading());
+                console.log('jadwal: ', parsedRes);
+                this.setState({ jadwal: parsedRes, isLoading: false, isBoxJadwal: false })
+                navigator.geolocation.clearWatch(this.watchId);
+                this.notifikasiScheduleSubuh(parsedRes.data.timings.Fajr)
+                this.notifikasiScheduleDzuhur(parsedRes.data.timings.Dhuhr)
+                this.notifikasiScheduleAshar(parsedRes.data.timings.Asr)
+                this.notifikasiScheduleMaghrib(parsedRes.data.timings.Maghrib)
+                this.notifikasiScheduleIsya(parsedRes.data.timings.Isha)
+                // this.dzuhurSchedule(this.state.jadwal.data.timings.Asr)
+            });
     }
 
     componentWillUnmount() {
@@ -600,7 +711,7 @@ class JadwalSolat extends Component {
         var negara = pisah[pisah.length - 1]
         console.log("pencet Kota", kota.structured_formatting.main_text)
 
-        let url = "http://api.aladhan.com/v1/timingsByCity?city=" + kota.structured_formatting.main_text + "&country=" + negara + "&method=2";
+        let url = "http://api.aladhan.com/v1/timingsByCity?city=" + kota.structured_formatting.main_text + "&country=" + negara + "&method=5";
 
         fetch(url, {
             credentials: 'include',
@@ -679,15 +790,124 @@ class JadwalSolat extends Component {
 
         currentToday = day[currentToday.getDay()] + ', ' + dd + '-' + monthNames[currentToday.getMonth()] + '-' + yyyy;
 
+        let boxJadwal = null
+
+        if (this.state.isBoxJadwal) {
+            boxJadwal = (
+                <View style={{ width: '100%', backgroundColor: '#ffffff', borderWidth: 0.2, borderRadius: 5, padding: 10, marginBottom: 15, alignItems: 'center', justifyContent: 'center', paddingVertical: 40 }}>
+                    <TouchableOpacity onPress={() => this.setState({ isLoading: true }, this.aktifJadwal())} >
+                        <MaterialIcons name='refresh' size={30} color='#c4c4c4' />
+                    </TouchableOpacity>
+                </View>
+            )
+        } else {
+            let shareJadwal = {
+                title: "Jadwal Solat Hari ini",
+                message: "Jadwal Solat Hari ini " + currentToday + " " + this.state.kota + "\n"
+                    + "\nSubuh : " + this.state.jadwal.data.timings.Fajr + "\nDzuhur : " + this.state.jadwal.data.timings.Dhuhr + "\nAshar : " + this.state.jadwal.data.timings.Asr + "\nMaghrib : " + this.state.jadwal.data.timings.Maghrib + "\nIsya : " + this.state.jadwal.data.timings.Isha + "\n"
+                    + "\nDownload aplikasi Halal Traveler"
+                ,
+                // urls: [halal],
+                url: "http://bit.ly/2GjvWuC",
+                // subject: "Share Link" //  for email
+                // social: Share.Social.WHATSAPP
+            };
+            boxJadwal = (
+                <View style={{ width: '100%', backgroundColor: '#ffffff', borderWidth: 0.2, borderRadius: 5, padding: 10, marginBottom: 15 }}>
+                    {/* bagian atas */}
+                    <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', borderWidth: 0, justifyContent: 'space-between', marginBottom: 30 }}>
+                        <View style={{ width: '52%', backgroundColor: '#3EBA49', borderRadius: 5, flexDirection: 'row', alignItems: 'center', justifyContent: "space-between" }}>
+                            <MaterialIcons name='gps-fixed' size={15} color='#ffffff' style={{ width: '12.5%', paddingLeft: 5 }} />
+                            <TextInput
+                                underlineColorAndroid='transparent'
+                                style={{ height: 38, width: '75%', paddingLeft: 8, color: '#ffffff', fontFamily: 'EncodeSans-SemiBold' }}
+                                placeholder={this.state.kota}
+                                placeholderTextColor={'#fff'}
+                                returnKeyType={'go'}
+                                value={this.state.kota}
+                                onChangeText={val => this.setState({ kota: val })}
+                                onSubmitEditing={() => {
+                                    let url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=" + this.state.kota + "&types=(cities)&key=AIzaSyD20cuaN2i3qXq_vq7EwD8mhrayjCAA_-w";
+
+                                    fetch(url, {
+                                        credentials: 'include',
+                                        method: 'GET',
+                                    })
+                                        .catch(err => {
+                                            console.log(err);
+                                            //Alert("Error accessing mitratel server");
+                                            this.setState({ errorMessage: err, isLoading: false })
+                                            //dispatch(uiStopLoading());
+                                        })
+                                        .then(res => res.json())
+                                        .then(parsedRes => {
+                                            //dispatch(uiStopLoading());
+                                            // var a = parsedRe
+                                            console.log('hasilKota: ', parsedRes);
+                                            this.setState({ hasilKota: parsedRes, isLoading: false, modalVisibleJadwalDua: true })
+                                        })
+                                        .catch(err => Alert.alert("Error", err))
+                                }}
+                            />
+                            <MaterialIcons name='arrow-drop-down' size={25} color='#ffffff' style={{ width: '12.5%', paddingRight: 0 }} />
+                        </View>
+                        <View style={{ width: '45%', backgroundColor: '#ffffff', borderRadius: 5, flexDirection: 'row', alignItems: 'center', justifyContent: "space-between" }}>
+                            <View style={{}}>
+                                <Text style={{ color: "#FF9D00" }}>{currentToday}</Text>
+                                <Text style={{ color: "#FF9D00" }}>{this.state.jadwal.data.date.hijri.date} Hijriah</Text>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Subuh</TextNormal>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Fajr}</TextNormal>
+                    </View>
+
+                    <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Sunrise</TextNormal>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Sunrise}</TextNormal>
+                    </View>
+
+                    <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Dzuhur</TextNormal>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Dhuhr}</TextNormal>
+                    </View>
+
+                    <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Asar</TextNormal>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Asr}</TextNormal>
+                    </View>
+
+                    <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Magrib</TextNormal>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Maghrib}</TextNormal>
+                    </View>
+
+                    <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between' }}>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Isya</TextNormal>
+                        <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Isha}</TextNormal>
+                    </View>
+
+                    <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>
+                        <TouchableOpacity onPress={() => { Share.open(shareJadwal) }} >
+                            <MaterialIcons name='share' size={25} color={'#C4C4C4'} />
+                        </TouchableOpacity>
+                    </View>
+
+                </View>
+            )
+        }
+
         if (this.state.isLoading) {
             return (
-                <View style={{ flex: 1, }}>
+                <View style={{ flex: 1, backgroundColor: '#f6f6f6', }}>
 
                     <View style={{ width: deviceWidth, paddingHorizontal: 16, marginTop: 12 }}>
                         <View style={{ width: '100%', borderWidth: 0.1, borderRadius: 5, flexDirection: 'row', backgroundColor: '#ffffff' }}>
                             <View style={{ height: 73, margin: 6, borderWidth: 0, width: 73 }}>
                                 {/* <ProgressiveImage resizeMode="contain" thumbnailSource={require('../../assets/adzan.png')} source={require('../../assets/adzan.png')} style={{ width: '100%', height: '100%', }} imageStyle={{}} /> */}
-                                <ProgressiveImage resizeMode="contain" thumbnailSource={require('../../assets/adzanHalal.png')} source={require('../../assets/adzanHalal.png')} style={{ width: '100%', height: '100%', }} imageStyle={{}} />
+                                <Image resizeMode="contain" source={require('../../assets/adzanHalal.png')} style={{ width: '100%', height: '100%', }} imageStyle={{}} />
                             </View>
                             <View style={{ justifyContent: 'center', borderWidth: 0, width: '65%', paddingLeft: 15, margin: 6 }}>
                                 <TextSemiBold style={{ color: "#2BB04C", fontSize: 20, marginBottom: 8 }}>Jadwal Sholat </TextSemiBold>
@@ -703,19 +923,9 @@ class JadwalSolat extends Component {
                 </View>
             )
         } else {
-            let shareJadwal = {
-                title: "Jadwal Solat Hari ini",
-                message: "Jadwal Solat Hari ini " + currentToday + " " + this.state.kota + "\n"
-                    + "\nSubuh : " + this.state.jadwal.data.timings.Fajr + "\nDzuhur : " + this.state.jadwal.data.timings.Dhuhr + "\nAshar : " + this.state.jadwal.data.timings.Asr + "\nMaghrib : " + this.state.jadwal.data.timings.Maghrib + "\nIsya : " + this.state.jadwal.data.timings.Isha + "\n"
-                    + "\nDownload aplikasi Halal Traveler"
-                ,
-                // urls: [halal],
-                url: "http://bit.ly/2GjvWuC",
-                // subject: "Share Link" //  for email
-                // social: Share.Social.WHATSAPP
-            };
+
             return (
-                <ScrollView>
+                <ScrollView style={{ backgroundColor: '#f6f6f6' }} >
                     <View style={styles.listContainer}>
 
                         <View style={{ flex: 1 }}>
@@ -724,7 +934,7 @@ class JadwalSolat extends Component {
                                 <View style={{ width: '100%', borderWidth: 0.1, borderRadius: 5, flexDirection: 'row', backgroundColor: '#ffffff' }}>
                                     <View style={{ height: 73, margin: 6, borderWidth: 0, width: 73 }}>
                                         {/* <ProgressiveImage resizeMode="contain" thumbnailSource={require('../../assets/adzan.png')} source={require('../../assets/adzan.png')} style={{ width: '100%', height: '100%', }} imageStyle={{}} /> */}
-                                        <ProgressiveImage resizeMode="contain" thumbnailSource={require('../../assets/adzanHalal.png')} source={require('../../assets/adzanHalal.png')} style={{ width: '100%', height: '100%', }} imageStyle={{}} />
+                                        <Image resizeMode="contain" source={require('../../assets/adzanHalal.png')} style={{ width: '100%', height: '100%', }} imageStyle={{}} />
                                     </View>
                                     <View style={{ justifyContent: 'center', borderWidth: 0, width: '65%', paddingLeft: 15, margin: 6 }}>
                                         <TextSemiBold style={{ color: "#2BB04C", fontSize: 20, marginBottom: 8 }}>Jadwal Sholat</TextSemiBold>
@@ -735,89 +945,7 @@ class JadwalSolat extends Component {
                         </View>
                         {/* panel tengah */}
                         <View style={{ width: deviceWidth, paddingHorizontal: 16, }}>
-                            <View style={{ width: '100%', backgroundColor: '#ffffff', borderWidth: 0.2, borderRadius: 5, padding: 10, marginBottom: 15 }}>
-                                {/* bagian atas */}
-                                <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', borderWidth: 0, justifyContent: 'space-between', marginBottom: 30 }}>
-                                    <View style={{ width: '52%', backgroundColor: '#3EBA49', borderRadius: 5, flexDirection: 'row', alignItems: 'center', justifyContent: "space-between" }}>
-                                        <MaterialIcons name='gps-fixed' size={15} color='#ffffff' style={{ width: '12.5%', paddingLeft: 5 }} />
-                                        <TextInput
-                                            underlineColorAndroid='transparent'
-                                            style={{ height: 38, width: '75%', paddingLeft: 8, color: '#ffffff', fontFamily: 'EncodeSans-SemiBold' }}
-                                            placeholder={this.state.kota}
-                                            placeholderTextColor={'#fff'}
-                                            returnKeyType={'go'}
-                                            value={this.state.kota}
-                                            onChangeText={val => this.setState({ kota: val })}
-                                            onSubmitEditing={() => {
-                                                let url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=" + this.state.kota + "&types=(cities)&key=AIzaSyD20cuaN2i3qXq_vq7EwD8mhrayjCAA_-w";
-
-                                                fetch(url, {
-                                                    credentials: 'include',
-                                                    method: 'GET',
-                                                })
-                                                    .catch(err => {
-                                                        console.log(err);
-                                                        //Alert("Error accessing mitratel server");
-                                                        this.setState({ errorMessage: err, isLoading: false })
-                                                        //dispatch(uiStopLoading());
-                                                    })
-                                                    .then(res => res.json())
-                                                    .then(parsedRes => {
-                                                        //dispatch(uiStopLoading());
-                                                        // var a = parsedRe
-                                                        console.log('hasilKota: ', parsedRes);
-                                                        this.setState({ hasilKota: parsedRes, isLoading: false, modalVisibleJadwalDua: true })
-                                                    })
-                                                    .catch(err => Alert.alert("Error", err))
-                                            }}
-                                        />
-                                        <MaterialIcons name='arrow-drop-down' size={25} color='#ffffff' style={{ width: '12.5%', paddingRight: 0 }} />
-                                    </View>
-                                    <View style={{ width: '45%', backgroundColor: '#ffffff', borderRadius: 5, flexDirection: 'row', alignItems: 'center', justifyContent: "space-between" }}>
-                                        <View style={{}}>
-                                            <Text style={{ color: "#FF9D00" }}>{currentToday}</Text>
-                                            <Text style={{ color: "#FF9D00" }}>{this.state.jadwal.data.date.hijri.date} Hijriah</Text>
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Subuh</TextNormal>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Fajr}</TextNormal>
-                                </View>
-
-                                <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Sunrise</TextNormal>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Sunrise}</TextNormal>
-                                </View>
-
-                                <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Dzuhur</TextNormal>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Dhuhr}</TextNormal>
-                                </View>
-
-                                <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Asar</TextNormal>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Asr}</TextNormal>
-                                </View>
-
-                                <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between', marginBottom: 8 }}>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Magrib</TextNormal>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Maghrib}</TextNormal>
-                                </View>
-
-                                <View style={{ width: '100%', height: 40, flexDirection: 'row', alignItems: 'center', borderWidth: 0, backgroundColor: '#FBFBFB', borderRadius: 3, justifyContent: 'space-between' }}>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingLeft: 16, borderRightWidth: 1, paddingTop: 6, borderColor: '#EEEEEE' }}>Isya</TextNormal>
-                                    <TextNormal style={{ color: '#757575', fontSize: 16, width: '50%', height: 35, paddingRight: 16, textAlign: 'right', paddingTop: 6 }}>{this.state.jadwal.data.timings.Isha}</TextNormal>
-                                </View>
-
-                                <View style={{ width: '100%', alignItems: 'center', justifyContent: 'center', marginTop: 8 }}>
-                                    <TouchableOpacity onPress={() => { Share.open(shareJadwal) }} >
-                                        <MaterialIcons name='share' size={25} color={'#C4C4C4'} />
-                                    </TouchableOpacity>
-                                </View>
-
-                            </View>
+                            {boxJadwal}
                             <TextNormal style={{ color: '#757575', fontSize: 12, width: deviceWidth, paddingHorizontal: 10, paddingBottom: 3 }}>Sumber : aladhan.com</TextNormal>
                         </View>
 
@@ -917,7 +1045,8 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
     return {
-        onSetLokasi: (lat, lon) => dispatch(requestLokasi(lat, lon))
+        onSetLokasi: (lat, lon) => dispatch(requestLokasi(lat, lon)),
+        onSetLokasiGoogle: (lat, lon) => dispatch(requestLokasiGoogle(lat, lon))
         // checkLogin :()=>dispatch(setl)
     };
 };

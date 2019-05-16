@@ -47,26 +47,49 @@ class PetaMasjid extends Component {
         }
         switch (event.id) {
 
-            case 'didAppear':
+            // case 'didAppear':
 
-                if (this.state.latitude == null && this.state.longitude == null) {
-                    this.aktifPeta()
-                    console.log('lokasi mesjid aktif')
-                } else {
-                    console.log(' lokasi mesjid tidak perlu aktif')
-                }
-                console.log("peta active")
-                break;
-            case 'didDisappear':
-                this.componentWillUnmount()
-                console.log("Peta dead")
-                break;
+            //     if (this.state.latitude == null && this.state.longitude == null) {
+            //         this.aktifPeta()
+            //         console.log('lokasi mesjid aktif')
+            //     } else {
+            //         console.log(' lokasi mesjid tidak perlu aktif')
+            //     }
+            //     console.log("peta active")
+            //     break;
+            // case 'didDisappear':
+            //     this.componentWillUnmount()
+            //     console.log("Peta dead")
+            //     break;
         }
     }
 
-    // componentWillMount() {
-    //     this.aktifPeta()
-    // }
+    componentWillMount = async () => {
+        var that = this;
+
+        Promise.all([
+            latitude = await AsyncStorage.getItem('ap:latitude').then((value) => {
+                return value
+            }),
+            longitude = await AsyncStorage.getItem('ap:longitude').then((value) => {
+                return value
+            })
+        ]).then(function (values) {
+            console.log('latitude', values[0]);
+            console.log('longitude', values[1]);
+            if (values[0] == null && values[1] == null) {
+                that.aktifPeta()
+                console.log('lokasi mesjid aktif')
+            } else {
+                that.setState({ longitude: values[1], latitude: values[0] });
+                // AsyncStorage.setItem("app:longitude", position.coords.longitude.toString())
+                // AsyncStorage.setItem("app:latitude", position.coords.latitude.toString())
+                that.dataPetaMasjid(values[0], values[1])
+            }
+        });
+
+        // this.aktifPeta()
+    }
 
     componentWillUnmount() {
         // used only when "providerListener" is enabled
@@ -92,7 +115,7 @@ class PetaMasjid extends Component {
                 this.setState({ longitude: position.coords.longitude, latitude: position.coords.latitude });
                 AsyncStorage.setItem("app:longitude", position.coords.longitude.toString())
                 AsyncStorage.setItem("app:latitude", position.coords.latitude.toString())
-                this.dataPetaMasjid()
+                this.dataPetaMasjid(position.coords.latitude, position.coords.longitude)
             }, error => {
                 this.aktifPeta()
                 // Alert.alert(
@@ -111,7 +134,13 @@ class PetaMasjid extends Component {
                 'Lokasi tidak ditemukan',
                 'Coba kembali',
                 [
-                    { text: 'OK', onPress: () => this.props.navigator.switchToTab({ tabIndex: 0 }) },
+                    // { text: 'OK', onPress: () => this.props.navigator.switchToTab({ tabIndex: 0 }) },
+                    {
+                        text: 'OK', onPress: () =>
+                            this.props.navigator.dismissModal({
+                                animationType: 'fade' // 'none' / 'slide-down' , dismiss animation for the modal (optional, default 'slide-down')
+                            })
+                    },
                 ],
                 // { cancelable: false }
             )
@@ -126,8 +155,8 @@ class PetaMasjid extends Component {
         });
     }
 
-    dataPetaMasjid() {
-        let url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + this.state.latitude + "," + this.state.longitude + "&radius=500&type=mosque&key=AIzaSyD20cuaN2i3qXq_vq7EwD8mhrayjCAA_-w";
+    dataPetaMasjid(lat, lon) {
+        let url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lon + "&radius=500&type=mosque&key=AIzaSyD20cuaN2i3qXq_vq7EwD8mhrayjCAA_-w";
         AsyncStorage.getItem("ap:auth:email").then((value) => {
             this.setState({ "email": value });
         })
@@ -139,14 +168,25 @@ class PetaMasjid extends Component {
                     .catch(err => {
                         console.log(err);
                         //Alert("Error accessing mitratel server");
-                        this.setState({ errorMessage: err, isLoading: false })
+                        // this.setState({ errorMessage: err})
                         //dispatch(uiStopLoading());
                     })
                     .then(res => res.json())
+                    .catch(err => {
+                        console.log(err);
+                        //Alert("Error accessing mitratel server");
+                        // this.setState({ errorMessage: err})
+                        //dispatch(uiStopLoading());
+                    })
                     .then(parsedRes => {
                         //dispatch(uiStopLoading());
                         console.log('masjid: ', parsedRes);
-                        this.setState({ masjid: parsedRes, isLoading: false })
+                        if (typeof (parsedRes) === 'undefined') {
+                            
+                        }
+                        else {
+                            this.setState({ masjid: parsedRes, isLoading: false })
+                        }
                     });
 
             })
@@ -280,7 +320,7 @@ class PetaMasjid extends Component {
     render() {
         // console.log("ini state mesjid, ", this.state)
         return (
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, backgroundColor: '#f6f6f6', }}>
 
                 {/* {/* panel atas */}
                 <View style={{ width: deviceWidth, paddingHorizontal: 16, marginTop: 12, marginBottom: 10 }}>

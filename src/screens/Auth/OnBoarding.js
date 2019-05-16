@@ -15,13 +15,20 @@ import {
     TouchableHighlight,
     Button,
     Alert,
-    Platform
+    Platform,
 } from "react-native";
 import { connect } from "react-redux";
 import DefaultInput from "../../components/UI/DefaultInput/DefaultInput";
 import { Navigation } from "react-native-navigation";
 import startMainTabs from "../../screens/MainTabs/startMainTabs";
 import { TextNormal, TextBold, TextMedium, TextSemiBold } from "../../components/UI/TextCustom/TextCustom"
+//custom icon
+import Icon from 'react-native-vector-icons/Ionicons';
+import { createIconSetFromFontello, createIconSetFromIcoMoon } from 'react-native-vector-icons';
+import icoMoonConfig from '../../assets/selection.json'
+import { startMainMenu } from "../../store/actions";
+const Ico = createIconSetFromIcoMoon(icoMoonConfig);
+//custom icon
 // import firebase from 'react-native-firebase';
 // import type { RemoteMessage, Notification, NotificationOpen } from 'react-native-firebase';
 
@@ -31,7 +38,8 @@ class OnBoarding extends Component {
         // navBarBackgroundColor:'#ce0b24',
         // navBarButtonColor:'white'
         navBarHidden: true,
-        statusBarColor: '#000000'
+        statusBarColor: '#fff',
+        drawUnderStatusBar: true
     };
 
     state = {
@@ -46,9 +54,128 @@ class OnBoarding extends Component {
                 AsyncStorage.getItem("ap:onBoard").then((value) => {
 
                     if (value !== null) {
-                        startMainTabs();
-                    }
+                        // startMainTabs();'
+                        this.props.goToMainMenu()
+                        // Promise.all([
+                        //     Ico.getImageSource(Platform.OS === 'android' ? "home" : "ios-cart", 30), //0
+                        //     Ico.getImageSource(Platform.OS === 'android' ? "story" : "ios-add-circle", 24, '#FFF'), //1
+                        //     Icon.getImageSource(Platform.OS === 'android' ? "md-menu" : "ios-menu", 30), //2
+                        //     Ico.getImageSource(Platform.OS === 'android' ? "small-mosque" : "ios-star", 30), //3
+                        //     Ico.getImageSource("notifications", 24, '#FFFFFF'), //4
+                        //     Ico.getImageSource("invoice", 24, '#FFFFFF'), //5
+                        //     Icon.getImageSource("md-notifications", 24, '#FFFFFF'), //6
+                        //     Ico.getImageSource("user-shape", 22, '#FFFFFF'), //7rr
+                        // ]).then(sources => {
 
+                        //     Navigation.startTabBasedApp({
+                        //         tabs: [
+                        //             {
+                        //                 screen: "cheria-holidays.CategoryTourPackage",
+                        //                 label: "Home",
+                        //                 title: "Tujuan Wisata",
+                        //                 icon: sources[0],
+                        //                 navigatorButtons: {
+                        //                     leftButtons: [
+                        //                         {
+                        //                             icon: require('../../assets/logoHeader/icon_header.png'),
+                        //                             title: "Menu",
+                        //                             id: "sideDrawerToggle"
+                        //                         }
+                        //                     ],
+                        //                     rightButtons: [
+                        //                         {
+                        //                             id: 'profile',
+                        //                             icon: sources[7],
+
+                        //                         },
+                        //                         {
+                        //                             id: 'notificationToggle',
+                        //                             icon: sources[6],
+                        //                             badgeStyle: 'red',
+                        //                             badgeCount: 0
+                        //                         },
+                        //                     ]
+
+                        //                 }
+                        //             },
+                        //             {
+                        //                 // screen: "cheria-holidays.RequestTour",
+                        //                 // title: "Request Tour",
+                        //                 // label: "Request Tour",
+                        //                 screen: "cheria-holidays.PaymentRecord",
+                        //                 title: "Pembelian / Pembayaran",
+                        //                 label: "Order",
+                        //                 // icon: sources[1],
+                        //                 icon: sources[5],
+                        //                 navigatorStyle: {
+                        //                     // drawUnderTabBar: false,
+                        //                 },
+                        //                 navigatorButtons: {
+                        //                     leftButtons: [
+                        //                         {
+                        //                             // icon: sources[2],
+                        //                             icon: require('../../assets/logoHeader/permintaan.png'),
+                        //                             title: "Menu",
+                        //                             id: "sideDrawerToggle"
+                        //                         }
+                        //                     ]
+                        //                 }
+                        //             },
+                        //         ],
+                        //         appStyle: {
+                        //             forceTitlesDisplay: true,
+                        //             navBarTextColor: "#ffffff",
+                        //             navBarBackgroundColor: '#2BB04C',
+                        //             navBarTextFontFamily: 'EncodeSans-Medium',
+                        //             tabBarSelectedButtonColor: "#34A941",
+                        //             tabBarButtonColor: "#BBBBBB",
+                        //             tabFontFamily: 'EncodeSans-Regular',
+                        //             tabFontSize: 12,
+                        //             selectedTabFontSize: 12,
+                        //             orientation: 'portrait'
+                        //         },
+                        //     });
+
+                        //     // this.props.navigator.push({
+                        //     //     screen: "cheria-holidays.CategoryTourPackage",
+                        //     //     title: "Halal Traveler",
+                        //     //     navigatorButtons: {
+                        //     //         leftButtons: [
+                        //     //             {
+                        //     //                 // icon: sources[2],
+                        //     //                 icon: require('../../assets/logoHeader/icon_header.png'),
+                        //     //                 title: "Menu",
+                        //     //                 id: "sideDrawerToggle"
+                        //     //             }
+                        //     //         ],
+                        //     //         rightButtons: [
+                        //     //             // {
+                        //     //             //     id: 'request',
+                        //     //             //     icon: sources[0],
+
+                        //     //             // },
+                        //     //             {
+                        //     //                 id: 'profile',
+                        //     //                 icon: sources[2],
+
+                        //     //             },
+                        //     //             {
+                        //     //                 id: 'notificationToggle',
+                        //     //                 icon: sources[1],
+                        //     //                 badgeStyle: 'red',
+                        //     //                 badgeCount: 0
+                        //     //             },
+                        //     //         ]
+
+                        //     //     },
+                        //     //     navigatorStyle: {
+                        //     //         navBarTextColor: "#ffffff",
+                        //     //         navBarBackgroundColor: '#2BB04C',
+                        //     //         navBarTextFontFamily: 'EncodeSans-Medium',
+                        //     //     }
+                        //     // })
+                        // })
+                    }
                 })
 
                 // AsyncStorage.getItem("ap:auth:email").then((value1) => {
@@ -94,7 +221,8 @@ class OnBoarding extends Component {
                     // title: "Modal", // title of the screen as appears in the nav bar (optional)
                     passProps: {},
                     navigatorStyle: {
-                        statusBarColor: '#000000'
+                        statusBarColor: '#fff',
+                        drawUnderStatusBar: true
                     },
                     animationType: 'fade',
                     overrideBackPress: true
@@ -114,7 +242,8 @@ class OnBoarding extends Component {
         // });
 
         AsyncStorage.setItem("ap:onBoard", "installed").then(res => {
-            startMainTabs();
+            // startMainTabs();
+            this.props.goToMainMenu()
         })
     }
 
@@ -164,8 +293,9 @@ const styles = StyleSheet.create({
 
 const mapDispatchToProps = dispatch => {
     return {
-        onMulai: () => dispatch(startMainTabs())
+        onMulai: () => dispatch(startMainTabs()),
         //   onAutoSignIn: () => dispatch(authAutoSignIn())
+        goToMainMenu: () => dispatch(startMainMenu())
     };
 };
 

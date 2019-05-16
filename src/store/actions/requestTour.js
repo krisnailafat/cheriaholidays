@@ -1,43 +1,43 @@
-/**
- * Created by mata on 6/1/18.
- */
+// /**
+//  * Created by mata on 6/1/18.
+//  */
 
-import { START_REQUEST_TOUR } from './actionTypes';
-import { Navigation } from "react-native-navigation";
-import Icon from 'react-native-vector-icons/Ionicons';
-import { Platform } from 'react-native';
+// import { START_REQUEST_TOUR } from './actionTypes';
+// import { Navigation } from "react-native-navigation";
+// import Icon from 'react-native-vector-icons/Ionicons';
+// import { Platform } from 'react-native';
 
-export const startRequestTour = () => {
-    return dispatch => {
+// export const startRequestTour = () => {
+//     return dispatch => {
 
-        Promise.all([
-            Icon.getImageSource(Platform.OS === 'android' ? "md-menu" : "ios-menu", 30)
-        ]).then(sources => {
-            Navigation.startSingleScreenApp({
-                screen: {
-                    screen: "cheria-holidays.RequestTour",
-                    title: "Request Tour",
-                    navigatorButtons: {
-                        leftButtons: [
-                            {
-                                icon: sources[0],
-                                title: "Menu",
-                                id: "sideDrawerToggle"
-                            }
-                        ]
-                    }
-                },
-                drawer: {
-                    left: {
-                        screen: "cheria-holidays.SideDrawer"
-                    }
-                },
-                appStyle: {
-                    navBarTextColor:"#490E14",
-                    navBarButtonColor:"#490E14"
-                },
-            });
-        })
+//         Promise.all([
+//             Icon.getImageSource(Platform.OS === 'android' ? "md-menu" : "ios-menu", 30)
+//         ]).then(sources => {
+//             Navigation.startSingleScreenApp({
+//                 screen: {
+//                     screen: "cheria-holidays.RequestTour",
+//                     title: "Request Tour",
+//                     navigatorButtons: {
+//                         leftButtons: [
+//                             {
+//                                 icon: sources[0],
+//                                 title: "Menu",
+//                                 id: "sideDrawerToggle"
+//                             }
+//                         ]
+//                     }
+//                 },
+//                 drawer: {
+//                     left: {
+//                         screen: "cheria-holidays.SideDrawer"
+//                     }
+//                 },
+//                 appStyle: {
+//                     navBarTextColor:"#490E14",
+//                     navBarButtonColor:"#490E14"
+//                 },
+//             });
+//         })
 
-    }
-};
+//     }
+// };

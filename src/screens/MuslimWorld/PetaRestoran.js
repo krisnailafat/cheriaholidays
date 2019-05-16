@@ -51,24 +51,46 @@ class PetaRestoran extends Component {
         }
         switch (event.id) {
 
-            case 'didAppear':
-                if (this.state.latitude == null && this.state.longitude == null) {
-                    this.aktifPetaRestoran()
-                    console.log("resto active")
-                } else {
-                    console.log("resto tidak perlu active")
-                }
-                break;
-            case 'didDisappear':
-                this.componentWillUnmount()
-                console.log("resto dead")
-                break;
+            // case 'didAppear':
+            //     if (this.state.latitude == null && this.state.longitude == null) {
+            //         this.aktifPetaRestoran()
+            //         console.log("resto active")
+            //     } else {
+            //         console.log("resto tidak perlu active")
+            //     }
+            //     break;
+            // case 'didDisappear':
+            //     this.componentWillUnmount()
+            //     console.log("resto dead")
+            //     break;
         }
     }
 
-    // componentWillMount() {
-    //     this.aktifPetaRestoran()
-    // }
+    componentWillMount = async () => {
+        var that = this;
+
+        Promise.all([
+            latitude = await AsyncStorage.getItem('ap:latitude').then((value) => {
+                return value
+            }),
+            longitude = await AsyncStorage.getItem('ap:longitude').then((value) => {
+                return value
+            })
+        ]).then(function (values) {
+            console.log('latitude', values[0]);
+            console.log('longitude', values[1]);
+            if (values[0] == null && values[1] == null) {
+                that.aktifPetaRestoran()
+                console.log('lokasi mesjid aktif')
+            } else {
+                that.setState({ longitude: values[1], latitude: values[0] });
+                // AsyncStorage.setItem("app:longitude", position.coords.longitude.toString())
+                // AsyncStorage.setItem("app:latitude", position.coords.latitude.toString())
+                that.dataPetaMasjid(values[0], values[1])
+            }
+        });
+        // this.aktifPetaRestoran()
+    }
 
     componentWillUnmount() {
         // used only when "providerListener" is enabled
@@ -92,7 +114,7 @@ class PetaRestoran extends Component {
                 let initialPosition = JSON.stringify(position);
                 console.log("ini hasilnya", position.coords.longitude)
                 this.setState({ longitude: position.coords.longitude, latitude: position.coords.latitude });
-                this.dataPetaMasjid()
+                this.dataPetaMasjid(position.coords.latitude, position.coords.longitude)
             }, error => {
                 // Alert.alert(
                 //     'Lokasi tidak ditemukan',
@@ -111,7 +133,13 @@ class PetaRestoran extends Component {
                 'Lokasi tidak ditemukan',
                 'Coba kembali',
                 [
-                    { text: 'OK', onPress: () => this.props.navigator.switchToTab({ tabIndex: 0 }) },
+                    // { text: 'OK', onPress: () => this.props.navigator.switchToTab({ tabIndex: 0 }) },
+                    {
+                        text: 'OK', onPress: () =>
+                            this.props.navigator.dismissModal({
+                                animationType: 'fade' // 'none' / 'slide-down' , dismiss animation for the modal (optional, default 'slide-down')
+                            })
+                    },
                 ],
                 // { cancelable: false }
             )
@@ -126,10 +154,10 @@ class PetaRestoran extends Component {
         });
     }
 
-    dataPetaMasjid() {
+    dataPetaMasjid(lat, lon) {
         // let url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + this.state.latitude + "," + this.state.longitude + "&radius=500&type=mosque&key=AIzaSyD20cuaN2i3qXq_vq7EwD8mhrayjCAA_-w";
         //https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-6.894484,107.629194&radius=1500&type=restaurant&keyword=halal&key=AIzaSyD20cuaN2i3qXq_vq7EwD8mhrayjCAA_-w
-        let url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + this.state.latitude + "," + this.state.longitude + "&radius=1500&type=restaurant&keyword=halal&key=AIzaSyD20cuaN2i3qXq_vq7EwD8mhrayjCAA_-w";
+        let url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + lat + "," + lon + "&radius=1500&type=restaurant&keyword=halal&key=AIzaSyD20cuaN2i3qXq_vq7EwD8mhrayjCAA_-w";
         AsyncStorage.getItem("ap:auth:email").then((value) => {
             this.setState({ "email": value });
         })
@@ -141,14 +169,27 @@ class PetaRestoran extends Component {
                     .catch(err => {
                         console.log(err);
                         //Alert("Error accessing mitratel server");
-                        this.setState({ errorMessage: err, isLoading: false })
+                        // this.setState({ errorMessage: err })
                         //dispatch(uiStopLoading());
                     })
                     .then(res => res.json())
+                    .catch(err => {
+                        console.log(err);
+                        //Alert("Error accessing mitratel server");
+                        // this.setState({ errorMessage: err})
+                        //dispatch(uiStopLoading());
+                    })
                     .then(parsedRes => {
                         //dispatch(uiStopLoading());
                         console.log('masjid: ', parsedRes);
-                        this.setState({ masjid: parsedRes, isLoading: false })
+                        if (typeof (parsedRes) === 'undefined') {
+
+                        }
+                        else {
+                            this.setState({ masjid: parsedRes, isLoading: false })
+                        }
+
+                        // this.setState({ masjid: parsedRes, isLoading: false })
                     });
 
             })
@@ -280,7 +321,7 @@ class PetaRestoran extends Component {
 
     render() {
         return (
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, backgroundColor: '#f6f6f6', }}>
 
                 {/* {/* panel atas */}
                 <View style={{ width: deviceWidth, paddingHorizontal: 16, marginTop: 12, marginBottom: 10 }}>

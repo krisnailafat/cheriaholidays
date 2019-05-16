@@ -119,7 +119,87 @@ class AuthScreen extends Component {
                 if (parsedRes.auth_token != undefined) {
                   AsyncStorage.setItem("ap:auth:token", parsedRes.auth_token)
                   AsyncStorage.setItem("ap:logged", 'true')
-                  startMainTabs();
+                  // startMainTabs();
+                  Promise.all([
+                    Ico.getImageSource(Platform.OS === 'android' ? "home" : "ios-cart", 30), //0
+                    Ico.getImageSource(Platform.OS === 'android' ? "story" : "ios-add-circle", 24, '#FFF'), //1
+                    Icon.getImageSource(Platform.OS === 'android' ? "md-menu" : "ios-menu", 30), //2
+                    Ico.getImageSource(Platform.OS === 'android' ? "small-mosque" : "ios-star", 30), //3
+                    Ico.getImageSource("notifications", 24, '#FFFFFF'), //4
+                    Ico.getImageSource("invoice", 24, '#FFFFFF'), //5
+                    Icon.getImageSource("md-notifications", 24, '#FFFFFF'), //6
+                    Ico.getImageSource("user-shape", 22, '#FFFFFF'), //7rr
+                  ]).then(sources => {
+
+                    Navigation.startTabBasedApp({
+                      tabs: [
+                        {
+                          screen: "cheria-holidays.CategoryTourPackage",
+                          label: "Home",
+                          title: "Tujuan Wisata",
+                          icon: sources[0],
+                          navigatorButtons: {
+                            leftButtons: [
+                              {
+                                icon: require('../../assets/logoHeader/icon_header.png'),
+                                title: "Menu",
+                                id: "sideDrawerToggle"
+                              }
+                            ],
+                            rightButtons: [
+                              {
+                                id: 'profile',
+                                icon: sources[7],
+
+                              },
+                              {
+                                id: 'notificationToggle',
+                                icon: sources[6],
+                                badgeStyle: 'red',
+                                badgeCount: 0
+                              },
+                            ]
+
+                          }
+                        },
+                        {
+                          // screen: "cheria-holidays.RequestTour",
+                          // title: "Request Tour",
+                          // label: "Request Tour",
+                          screen: "cheria-holidays.PaymentRecord",
+                          title: "Pembelian / Pembayaran",
+                          label: "Order",
+                          // icon: sources[1],
+                          icon: sources[5],
+                          navigatorStyle: {
+                            // drawUnderTabBar: false,
+                          },
+                          navigatorButtons: {
+                            leftButtons: [
+                              {
+                                // icon: sources[2],
+                                icon: require('../../assets/logoHeader/permintaan.png'),
+                                title: "Menu",
+                                id: "sideDrawerToggle"
+                              }
+                            ]
+                          }
+                        },
+                      ],
+                      appStyle: {
+                        forceTitlesDisplay: true,
+                        navBarTextColor: "#ffffff",
+                        navBarBackgroundColor: '#2BB04C',
+                        navBarTextFontFamily: 'EncodeSans-Medium',
+                        tabBarSelectedButtonColor: "#34A941",
+                        tabBarButtonColor: "#BBBBBB",
+                        tabFontFamily: 'EncodeSans-Regular',
+                        tabFontSize: 12,
+                        selectedTabFontSize: 12,
+                        orientation: 'portrait'
+                      },
+                    });
+                  })
                 } else {
                   Alert.alert("Username & Password yang Anda masukan salah")
                 }
@@ -197,10 +277,15 @@ class AuthScreen extends Component {
         animationType: 'none' // 'none' / 'slide-down' , dismiss animation for the modal (optional, default 'slide-down')
       });
     })
-      .catch(err => {
-        console.log(err)
-        // this.switchAuthModeHandler()
-      })
+      // .catch(err => {
+      //   Alert.alert("Gagal", err,
+      //     [
+      //       { text: 'OK' }
+      //     ]
+      //   )
+      //   console.log(err)
+      //   // this.switchAuthModeHandler()
+      // })
   };
 
   updateInputState = (key, value) => {

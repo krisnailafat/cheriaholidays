@@ -4,7 +4,7 @@
 
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { startPayment } from "../../store/actions/index";
+import { startPayment, donePayment, startMainMenu, pushMainMenu } from "../../store/actions/index";
 import DefaultInput from "../../components/UI/DefaultInput/DefaultInput";
 import Iconn from "react-native-vector-icons/Ionicons";
 import Icon from "react-native-vector-icons/Entypo";
@@ -186,7 +186,13 @@ class TourOrder extends Component {
                             'ORDER Sukses',
                             'Terima kasih atas ORDER yg diberikan.\nKami akan & memfollowup ORDER Anda.',
                             [
-                                { text: 'OK', onPress: this.props.onPayment },
+                                {
+                                    text: 'OK', onPress: () =>
+                                        this.props.onPaymentDoneGoToMainMenu().then(res => {
+                                            AsyncStorage.setItem("ap:order:condition", JSON.stringify(true)).then(res => { console.log('res ', res) })
+                                            // console.log('order kepanggil')
+                                        })
+                                },
                             ],
                             { cancelable: false }
                         )
@@ -202,13 +208,14 @@ class TourOrder extends Component {
                 });
         } else {
             if (this.state.nama == "") {
-                Alert.alert('ERROR', 'Silahkan isi Nama Anda terlebih dahulu')
+                Alert.alert('Perhatian', 'Silahkan isi Nama Anda terlebih dahulu')
             } else if (this.state.telepon == "") {
-                Alert.alert('ERROR', 'Silahkan isi nomor Telepon terlebih dahulu')
+                Alert.alert('Perhatian', 'Silahkan isi nomor Telepon terlebih dahulu')
             } else if (this.state.tour_departure == 999) {
-                Alert.alert('ERROR', 'Silahkan isi Tanggal Keberangkatan terlebih dahulu')
+                Alert.alert('Perhatian', 'Silahkan isi Tanggal Keberangkatan terlebih dahulu')
             }
         }
+
 
     }
 
@@ -1079,9 +1086,9 @@ class TourOrder extends Component {
         }
 
         return (
-            <ScrollView>
+            <ScrollView stlye={{ backgroundColor: '#fff' }}>
 
-                <View style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#fff' }}>
                     {/* judul */}
                     <View style={{ width: Dimensions.get('window').width, backgroundColor: '#2BB04C', marginTop: 12, marginBottom: 16 }}>
                         <TextMedium style={{ paddingHorizontal: 28, paddingVertical: 14, color: '#ffffff', fontSize: 18 }}>{this.props.order.name}</TextMedium>
@@ -1090,7 +1097,7 @@ class TourOrder extends Component {
                     <View style={{ width: Dimensions.get('window').width, backgroundColor: '#ffffff' }}>
                         <TextNormal style={{ color: '#404040', fontSize: 12, marginTop: 12, marginBottom: 8, paddingLeft: 28 }}>Reservation Number</TextNormal>
                         {/* nomor reeservasi */}
-                        <View style={{ width: 120, height: 30, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#2BB04C', borderRadius: 5, marginLeft: 28, marginBottom: 14 }}>
+                        <View style={{ width: 150, height: 30, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#2BB04C', borderRadius: 5, marginLeft: 28, marginBottom: 14 }}>
                             <TextNormal style={{ paddingHorizontal: 13, paddingVertical: 5, color: '#2BB04C', fontSize: 16 }}>{this.props.reserve_number}</TextNormal>
                         </View>
                         {/* form nama  */}
@@ -1289,7 +1296,8 @@ const styles = StyleSheet.create({
 
 const mapDispatchToProps = dispatch => {
     return {
-        onPayment: () => dispatch(startPayment())
+        // onPayment: () => dispatch(startPayment())
+        onPaymentDoneGoToMainMenu: () => dispatch(startMainMenu())
     };
 };
 

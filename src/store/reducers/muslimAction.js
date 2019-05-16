@@ -1,7 +1,8 @@
-import { SET_LOKASI } from "../actions/actionTypes";
+import { SET_LOKASI, SET_LOKASIGOOGLE } from "../actions/actionTypes";
 
 const initialState = {
-    lokasi: null
+    lokasi: null,
+    lokasiGoogle: null
 };
 
 const reducer = (state = initialState, action) => {
@@ -10,6 +11,12 @@ const reducer = (state = initialState, action) => {
             return {
                 ...state,
                 lokasi: action.lokasi,
+            };
+
+        case SET_LOKASIGOOGLE:
+            return {
+                ...state,
+                lokasiGoogle: action.lokasiGoogle,
             };
         // case AUTH_REMOVE_TOKEN:
         //   return {

@@ -283,7 +283,7 @@ class TourPackage extends Component {
         // console.log("ini prop tour id ", this.props)
         // console.log("ini date ,",this.state.filterDate," ",this.props.tourid)
         return (
-            <View style={{ flex: 1, alignItems: 'center' }}>
+            <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#C4C4C4' }}>
                 {/* <View style={{
                     paddingHorizontal: 20,
                     height: 60,

@@ -628,7 +628,7 @@ class PaymentRecord extends Component {
         // }
         if (this.props.isLoading) {
             return (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#C4C4C4'  }}>
                     <ActivityIndicator size="large" color="#FF9D00" />
                     <Text style={{ paddingTop: 10 }}>Loading ...</Text>
                 </View>

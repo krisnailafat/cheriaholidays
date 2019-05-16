@@ -23,11 +23,12 @@ import {
     AsyncStorage,
     PermissionsAndroid,
     Alert,
-    ImageBackground
+    ImageBackground,
+    DeviceEventEmitter
 } from "react-native";
 import { requestLokasiGoogle, profile, pembelian } from "../../store/actions";
 import Share from 'react-native-share';
-
+import LocationServicesDialogBox from "react-native-android-location-services-dialog-box";
 //custom icon
 import { createIconSetFromFontello, createIconSetFromIcoMoon } from 'react-native-vector-icons';
 import icoMoonConfig from '../../assets/selection.json'
@@ -47,7 +48,7 @@ import {
 // import RNCalendarEvents from 'react-native-calendar-events';
 // import BackgroundJob from "react-native-background-job";
 
-class CategoryTourPackage extends Component {
+class MainMenu extends Component {
     constructor(props) {
         super(props);
         this.props.navigator.setOnNavigatorEvent(this.onNavigatorEvent);
@@ -144,7 +145,8 @@ class CategoryTourPackage extends Component {
                 });
             }
         }
-        if (event.type == 'DeepLink') {
+        // console.log(event)
+        if (event.link == 'DeepLink') {
             //Make your things..
             console.log('main menu deeplink clicked')
             console.log('payload link', event.payload)
@@ -159,6 +161,22 @@ class CategoryTourPackage extends Component {
                 navigatorStyle: {}, // override the navigator style for the pushed screen (optional)
                 navigatorButtons: {} // override the nav buttons for the pushed screen (optional)
             });
+        }
+        if (event.link == 'salatDeepLink') {
+            //Make your things..
+            console.log('jadwal salatdeeplink clicked')
+            this.omMenuClick('cheria-holidays.JadwalSolat', 'Jadwal Sholat')
+            // this.props.navigator.showModal({
+            //     screen: 'cheria-holidays.NotificationScreen', // unique ID registered with Navigation.registerScreen
+            //     title: "Notifikasi", // navigation bar title of the pushed screen (optional)
+            //     passProps: {
+            //         dataNotif: event.payload
+            //     }, // simple serializable object that will pass as props to the pushed screen (optional)
+            //     animated: true, // does the resetTo have transition animation or does it happen immediately (optional)
+            //     animationType: 'fade', // 'fade' (for both) / 'slide-horizontal' (for android) does the resetTo have different transition animation (optional)
+            //     navigatorStyle: {}, // override the navigator style for the pushed screen (optional)
+            //     navigatorButtons: {} // override the nav buttons for the pushed screen (optional)
+            // });
         }
     };
 
@@ -224,46 +242,13 @@ class CategoryTourPackage extends Component {
     // }
 
     componentWillMount() {
-        let url2 = "https://travelfair.co/api/region/";
-        fetch(url2)
-            .catch(err => {
-                console.log(err);
-                alert("Error accessing travelfair.co");
-                //dispatch(uiStopLoading());
-            })
-            .then(res => res.json())
-            .catch(err => {
-                console.log(err);
-                alert("JSON error");
-            })
-            .then(parsedRes => {
-                //dispatch(uiStopLoading());
-                console.log('data category: ', parsedRes);
-                this.setState({ toursRegion: parsedRes.reverse() })
-            });
 
-        let url = "https://travelfair.co/api/category/";
-        fetch(url)
-            .catch(err => {
-                console.log(err);
-                alert("Error accessing travelfair.co");
-                //dispatch(uiStopLoading());
-            })
-            .then(res => res.json())
-            .catch(err => {
-                console.log(err);
-                alert("JSON error");
-            })
-            .then(parsedRes => {
-                //dispatch(uiStopLoading());
-                console.log('data category: ', parsedRes);
-                this.setState({ tours: parsedRes.reverse(), isLoading: false })
-            });
     }
 
     componentWillUnmount() {
         // this.notificationListener();
         // navigator.geolocation.clearWatch(this.watchID);
+        LocationServicesDialogBox.stopListener();
     }
 
     componentDidMount = () => {
@@ -272,61 +257,62 @@ class CategoryTourPackage extends Component {
         var that = this;
         //Checking for the permission just after component loaded
 
-        async function requestLocationPermission() {
-            try {
-                const granted = await PermissionsAndroid.check(
-                    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
-                        'title': 'Membutuhkan akses lokasi',
-                        'message': 'Halal traveler membutuhkan akses lokasi'
-                    }
-                )
-                console.log('granted ', granted)
-                // if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                if (granted) {
-                    //To Check, If Permission is granted
-                    that.callLocation(that);
-                }
-                else {
-                    try {
-                        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-                            {
-                                'title': 'Membutuhkan akses lokasi',
-                                'message': 'Halal traveler membutuhkan akses lokasi'
-                            }
-                        )
-                        console.log('granted else, ', granted)
-                        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                            that.callLocation(that);
-                        }
-                        else {
-                            Alert.alert("Gagal akses lokasi", "Harap nyalakan lokasi",
-                                [
-                                    { text: 'OK', onPress: () => that.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
-                                ],
-                                { cancelable: false }
-                            );
-                        }
-                    } catch (err) {
-                        Alert.alert("Terjadi kesalahan", "Silahkan coba beberapa saat lagi",
-                            [
-                                { text: 'OK', onPress: () => that.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
-                            ],
-                            { cancelable: false }
-                        );
-                    }
-                }
+        // async function requestLocationPermission() {
+        //     try {
+        //         const granted = await PermissionsAndroid.check(
+        //             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
+        //                 'title': 'Membutuhkan akses lokasi',
+        //                 'message': 'Halal traveler membutuhkan akses lokasi'
+        //             }
+        //         )
+        //         console.log('granted ', granted)
+        //         // if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        //         if (granted) {
+        //             //To Check, If Permission is granted
+        //             that.callLocation(that);
+        //         }
+        //         else {
+        //             try {
+        //                 const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        //                     {
+        //                         'title': 'Membutuhkan akses lokasi',
+        //                         'message': 'Halal traveler membutuhkan akses lokasi'
+        //                     }
+        //                 )
+        //                 console.log('granted else, ', granted)
+        //                 if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        //                     that.callLocation(that);
+        //                 }
+        //                 else {
+        //                     Alert.alert("Akses lokasi", "Harap nyalakan lokasi",
+        //                         [
+        //                             { text: 'OK', onPress: () => that.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
+        //                         ],
+        //                         { cancelable: false }
+        //                     );
+        //                 }
+        //             } catch (err) {
+        //                 Alert.alert("Terjadi kesalahan", "Silahkan coba beberapa saat lagi",
+        //                     [
+        //                         { text: 'OK', onPress: () => that.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
+        //                     ],
+        //                     { cancelable: false }
+        //                 );
+        //             }
+        //         }
 
-            } catch (err) {
-                Alert.alert("Terjadi kesalahan", "Silahkan coba beberapa saat lagi",
-                    [
-                        { text: 'OK', onPress: () => that.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
-                    ],
-                    { cancelable: false }
-                );
-                console.warn(err)
-            }
-        }
-        requestLocationPermission();
+        //     } catch (err) {
+        //         Alert.alert("Terjadi kesalahan", "Silahkan coba beberapa saat lagi",
+        //             [
+        //                 { text: 'OK', onPress: () => that.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
+        //             ],
+        //             { cancelable: false }
+        //         );
+        //         console.warn(err)
+        //     }
+        // }
+        // requestLocationPermission();
+        this.fetchLocation()
         AsyncStorage.getItem("ap:logged").then((value) => {
 
             if (value !== null) {
@@ -355,7 +341,12 @@ class CategoryTourPackage extends Component {
             }
         }
         afterOrder();
-
+        DeviceEventEmitter.addListener('locationProviderStatusChange', function (status) { // only trigger when "providerListener" is enabled
+            console.log(status); //  status => {enabled: false, status: "disabled"} or {enabled: true, status: "enabled"}
+            if (status == "disabled") {
+                Alert.alert("Harus mengaktifkan GPS");
+            }
+        });
 
     }
 
@@ -391,7 +382,7 @@ class CategoryTourPackage extends Component {
                             that.callLocation(that);
                         }
                         else {
-                            Alert.alert("Gagal akses lokasi", "Harap nyalakan lokasi",
+                            Alert.alert("Akses lokasi", "Harap nyalakan lokasi",
                                 [
                                     { text: 'OK', onPress: () => that.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
                                 ],
@@ -409,7 +400,7 @@ class CategoryTourPackage extends Component {
                 }
 
             } catch (err) {
-                Alert.alert("Terjadi kesalahan", "Silahkan coba beberapa saat lagi",
+                Alert.alert("Akses lokasi", "Harap nyalakan lokasi",
                     [
                         { text: 'OK', onPress: () => that.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
                     ],
@@ -468,7 +459,10 @@ class CategoryTourPackage extends Component {
                 that.setState({ currentLatitude: currentLatitude });
                 //Setting state Latitude to re re-render the Longitude Text
                 console.log('currentLongitude ' + currentLongitude + ' currentLatitude ' + currentLatitude)
+                console.log('currentLongitude ', Number(currentLatitude))
                 if (currentLongitude !== null && currentLatitude !== null) {
+                    AsyncStorage.setItem("ap:latitude", currentLatitude)
+                    AsyncStorage.setItem("ap:longitude", currentLongitude)
                     this.props.onSetLokasiGoogle(currentLatitude, currentLongitude).then(response => {
                         console.log('onSetLokasiGoogle ', response)
                         // const arrLokasiGoogle = res.results.filter(obj => obj.address_components.find(x => x.types.find(z => z === "administrative_area_level_2"))).map(x => x.address_components.find(y => y.types.find(y => y === "administrative_area_level_2")))
@@ -501,7 +495,7 @@ class CategoryTourPackage extends Component {
                 }
             },
             (error) =>
-                Alert.alert("Gagal akses lokasi", "Silahkan coba kembali",
+                Alert.alert("Akses lokasi", "Silahkan coba kembali",
                     [
                         { text: 'OK', onPress: () => that.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
                     ],
@@ -522,6 +516,100 @@ class CategoryTourPackage extends Component {
         //     that.setState({ currentLatitude: currentLatitude });
         //     //Setting state Latitude to re re-render the Longitude Text
         // });
+    }
+
+    fetchLocation = () => {
+        this.setState({ isBoxInfoSolat: true })
+        LocationServicesDialogBox.checkLocationServicesIsEnabled({
+            message: "<h2>Akses Lokasi</h2>Halal Traveler membutuhkan lokasi<br/><br/>aktifkan GPS untuk lokasi<br/>",
+            ok: "Iya",
+            cancel: "Tidak",
+            enableHighAccuracy: false, // true => GPS AND NETWORK PROVIDER, false => GPS OR NETWORK PROVIDER
+            showDialog: true, // false => Opens the Location access page directly
+            openLocationServices: true, // false => Directly catch method is called if location services are turned off
+            preventOutSideTouch: false, //true => To prevent the location services popup from closing when it is clicked outside
+            preventBackClick: true, //true => To prevent the location services popup from closing when it is clicked back button
+            providerListener: true // true ==> Trigger "locationProviderStatusChange" listener when the location state changes
+        }).then(function (success) {
+            // success => {alreadyEnabled: true, enabled: true, status: "enabled"} 
+            navigator.geolocation.getCurrentPosition((position) => {
+                let initialPosition = JSON.stringify(position);
+                console.log("ini hasilnya", position.coords.longitude)
+                this.setState({ longitude: position.coords.longitude, latitude: position.coords.latitude });
+                const currentLongitude = JSON.stringify(position.coords.longitude);
+                //getting the Longitude from the location json
+                const currentLatitude = JSON.stringify(position.coords.latitude);
+                //getting the latitude from the location json
+                AsyncStorage.setItem("ap:latitude", currentLatitude)
+                AsyncStorage.setItem("ap:longitude", currentLongitude)
+                this.props.onSetLokasiGoogle(currentLatitude, currentLongitude)
+                    .then(response => {
+                        console.log('onSetLokasiGoogle ', response)
+                        if (typeof (response) === "undefined") {
+                            console.log('response undefined, ', response)
+                        }
+                        else {
+                            const results = response.results;
+                            for (var i = 0; i < results.length; i++) {
+
+                                if (results[i].types[0] === "locality") {
+                                    this.setState({
+                                        city: (results[i].address_components[0].short_name)
+                                    });
+                                    // console.log(this.state.city)
+                                    console.log("ini ", (results[i].address_components[0].short_name).toLowerCase())
+                                }
+                                else if (results[i].types[0] === "administrative_area_level_2") {
+                                    this.setState({
+                                        city: (results[i].address_components[0].short_name)
+                                    });
+                                }
+                            }
+                            this.dataJadwalSholat(currentLatitude, currentLongitude)
+                        }
+                    },
+                        // (error) => {
+                        //     Alert.alert(`${error}`, `Silahkan coba kembali`,
+                        //         [
+                        //             { text: 'OK', onPress: () => this.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
+                        //         ]);
+                        // }
+                    ).catch(err => {
+                        Alert.alert(`${err}`, `Silahkan coba kembali`,
+                            [
+                                { text: 'OK', onPress: () => this.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
+                            ]);
+                        // console.log('error fetchLocation, ', err)
+                        // console.error('error fetchLocation, ', err)
+                        // throw err;
+                    })
+
+            }, error => {
+                console.log(error)
+                Alert.alert("Akses lokasi", "Silahkan coba kembali",
+                    [
+                        { text: 'OK', onPress: () => this.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
+                    ],
+                    { cancelable: false }
+                )
+            }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 });
+        }.bind(this)
+        ).catch((error) => {
+            Alert.alert("Akses lokasi", "Silahkan coba kembali",
+                [
+                    { text: 'OK', onPress: () => this.setState({ isBoxInfoSolat: false, isBoxInfoSolatFetchGps: false }) },
+                ],
+                { cancelable: false }
+            )
+            console.log(error.message);
+        });
+
+        DeviceEventEmitter.addListener('locationProviderStatusChange', function (status) { // only trigger when "providerListener" is enabled
+            if (status == "disabled") {
+                Alert.alert("Harus mengaktifkan GPS");
+            }
+            console.log(status); //  status => {enabled: false, status: "disabled"} or {enabled: true, status: "enabled"}
+        });
     }
 
     dataJadwalSholat = (lat, lon) => {
@@ -794,162 +882,162 @@ class CategoryTourPackage extends Component {
         })
     }
 
-    itemSelectedHandler = key => {
-        // console.log('this.props', this.props)
+    // itemSelectedHandler = key => {
+    //     // console.log('this.props', this.props)
 
-        // if (key.cat_tours != undefined) {
-        this.props.navigator.push({
-            screen: "cheria-holidays.TourPackage",
-            title: key.name,
-            passProps: {
-                tourcontent: key.cat_tours,
-                tourtitle: key.name,
-                tourid: key.cat_tours[0].category
-            },
-        });
-        // } else {
-        //     //  ke halaman region
-        //     Promise.all([
-        //         FontAwesome.getImageSource("filter", 24, '#3EBA49'),
-        //     ]).then(sources => {
+    //     // if (key.cat_tours != undefined) {
+    //     this.props.navigator.push({
+    //         screen: "cheria-holidays.TourPackage",
+    //         title: key.name,
+    //         passProps: {
+    //             tourcontent: key.cat_tours,
+    //             tourtitle: key.name,
+    //             tourid: key.cat_tours[0].category
+    //         },
+    //     });
+    //     // } else {
+    //     //     //  ke halaman region
+    //     //     Promise.all([
+    //     //         FontAwesome.getImageSource("filter", 24, '#3EBA49'),
+    //     //     ]).then(sources => {
 
-        //         this.props.navigator.push({
-        //             screen: "cheria-holidays.TourPackage",
-        //             title: key.name,
-        //             passProps: {
-        //                 tourcontent: key.reg_tours,
-        //                 tourtitle: key.name,
-        //                 tourid: key.reg_tours[0].category
-        //             },
-        // navigatorButtons: {
-        //     rightButtons: [
-        //         {
-        //             id: 'filter',
-        //             icon: sources[0],
+    //     //         this.props.navigator.push({
+    //     //             screen: "cheria-holidays.TourPackage",
+    //     //             title: key.name,
+    //     //             passProps: {
+    //     //                 tourcontent: key.reg_tours,
+    //     //                 tourtitle: key.name,
+    //     //                 tourid: key.reg_tours[0].category
+    //     //             },
+    //     // navigatorButtons: {
+    //     //     rightButtons: [
+    //     //         {
+    //     //             id: 'filter',
+    //     //             icon: sources[0],
 
-        //         },
-        //     ]
-        // }
-        // navigatorStyle: {
-        //     navBarCustomView: 'cheria-holidays.CustomNavBar',
-        // }
+    //     //         },
+    //     //     ]
+    //     // }
+    //     // navigatorStyle: {
+    //     //     navBarCustomView: 'cheria-holidays.CustomNavBar',
+    //     // }
 
-        //     })
-        // })
-        // }
-    };
-    itemSelectedHandlerRegion = key => {
+    //     //     })
+    //     // })
+    //     // }
+    // };
+    // itemSelectedHandlerRegion = key => {
 
-        //  ke halaman region
-        this.props.navigator.push({
-            screen: "cheria-holidays.TourPackage",
-            title: key.name,
-            passProps: {
-                tourcontent: key.reg_tours,
-                tourtitle: key.name,
-                tourid: key.reg_tours[0].category
-            },
+    //     //  ke halaman region
+    //     this.props.navigator.push({
+    //         screen: "cheria-holidays.TourPackage",
+    //         title: key.name,
+    //         passProps: {
+    //             tourcontent: key.reg_tours,
+    //             tourtitle: key.name,
+    //             tourid: key.reg_tours[0].category
+    //         },
 
-            // navigatorButtons: {
-            //     rightButtons: [
-            //         {
-            //             id: 'filter',
-            //             icon: sources[0],
+    //         // navigatorButtons: {
+    //         //     rightButtons: [
+    //         //         {
+    //         //             id: 'filter',
+    //         //             icon: sources[0],
 
-            //         },
-            //     ]
-            // }
-            // navigatorStyle: {
-            //     navBarCustomView: 'cheria-holidays.CustomNavBar',
-            // }
+    //         //         },
+    //         //     ]
+    //         // }
+    //         // navigatorStyle: {
+    //         //     navBarCustomView: 'cheria-holidays.CustomNavBar',
+    //         // }
 
-        })
-
-
-    };
+    //     })
 
 
-    onKategoriPressed = () => {
-        console.log('kategori')
-        let url = "https://travelfair.co/api/category/";
-        fetch(url)
-            .catch(err => {
-                console.log(err);
-                alert("Error accessing travelfair.co");
-                //dispatch(uiStopLoading());
-            })
-            .then(res => res.json())
-            .catch(err => {
-                console.log(err);
-                alert("JSON error");
-            })
-            .then(parsedRes => {
-                //dispatch(uiStopLoading());
-                console.log('data category: ', parsedRes);
-                this.setState({ tours: parsedRes })
-            });
-    }
+    // };
 
-    onRegionPressed = () => {
-        console.log('region')
-        let url = "https://travelfair.co/api/region/";
-        fetch(url)
-            .catch(err => {
-                console.log(err);
-                alert("Error accessing travelfair.co");
-                //dispatch(uiStopLoading());
-            })
-            .then(res => res.json())
-            .catch(err => {
-                console.log(err);
-                alert("JSON error");
-            })
-            .then(parsedRes => {
-                //dispatch(uiStopLoading());
-                console.log('data category: ', parsedRes);
-                this.setState({ tours: parsedRes })
-            });
-    }
 
-    renderRegion() {
-        if (this.state.isLoading) {
-            return (
-                <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#FF9D00" />
-                    <Text style={{ paddingTop: 10 }}>Loading ...</Text>
-                </View>
-            )
-        } else {
-            return (
+    // onKategoriPressed = () => {
+    //     console.log('kategori')
+    //     let url = "https://travelfair.co/api/category/";
+    //     fetch(url)
+    //         .catch(err => {
+    //             console.log(err);
+    //             alert("Error accessing travelfair.co");
+    //             //dispatch(uiStopLoading());
+    //         })
+    //         .then(res => res.json())
+    //         .catch(err => {
+    //             console.log(err);
+    //             alert("JSON error");
+    //         })
+    //         .then(parsedRes => {
+    //             //dispatch(uiStopLoading());
+    //             console.log('data category: ', parsedRes);
+    //             this.setState({ tours: parsedRes })
+    //         });
+    // }
 
-                <TourListRegions
-                    tours={this.state.toursRegion}
-                    onItemSelected={this.itemSelectedHandlerRegion}
-                />
+    // onRegionPressed = () => {
+    //     console.log('region')
+    //     let url = "https://travelfair.co/api/region/";
+    //     fetch(url)
+    //         .catch(err => {
+    //             console.log(err);
+    //             alert("Error accessing travelfair.co");
+    //             //dispatch(uiStopLoading());
+    //         })
+    //         .then(res => res.json())
+    //         .catch(err => {
+    //             console.log(err);
+    //             alert("JSON error");
+    //         })
+    //         .then(parsedRes => {
+    //             //dispatch(uiStopLoading());
+    //             console.log('data category: ', parsedRes);
+    //             this.setState({ tours: parsedRes })
+    //         });
+    // }
 
-            )
-        }
-    }
+    // renderRegion() {
+    //     if (this.state.isLoading) {
+    //         return (
+    //             <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+    //                 <ActivityIndicator size="large" color="#FF9D00" />
+    //                 <Text style={{ paddingTop: 10 }}>Loading ...</Text>
+    //             </View>
+    //         )
+    //     } else {
+    //         return (
 
-    renderMain() {
-        if (this.state.isLoading) {
-            return (
-                <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#FF9D00" />
-                    <Text style={{ paddingTop: 10 }}>Loading ...</Text>
-                </View>
-            )
-        } else {
-            return (
+    //             <TourListRegions
+    //                 tours={this.state.toursRegion}
+    //                 onItemSelected={this.itemSelectedHandlerRegion}
+    //             />
 
-                <TourListCategory
-                    tours={this.state.tours}
-                    onItemSelected={this.itemSelectedHandler}
-                />
+    //         )
+    //     }
+    // }
 
-            )
-        }
-    }
+    // renderMain() {
+    //     if (this.state.isLoading) {
+    //         return (
+    //             <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+    //                 <ActivityIndicator size="large" color="#FF9D00" />
+    //                 <Text style={{ paddingTop: 10 }}>Loading ...</Text>
+    //             </View>
+    //         )
+    //     } else {
+    //         return (
+
+    //             <TourListCategory
+    //                 tours={this.state.tours}
+    //                 onItemSelected={this.itemSelectedHandler}
+    //             />
+
+    //         )
+    //     }
+    // }
 
     render() {
         let boxLogin = null
@@ -983,7 +1071,7 @@ class CategoryTourPackage extends Component {
         }
 
         if (this.state.isBoxProfile) {
-            console.log(this.props.point)
+            // console.log(this.props.point)
             boxProfile = (
                 <View style={{ width: Dimensions.get('window').width, paddingHorizontal: 11, paddingVertical: 17, backgroundColor: '#fff' }}>
                     <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 0 }}>
@@ -1070,7 +1158,7 @@ class CategoryTourPackage extends Component {
 
                     <ImageBackground source={require('../../assets/mosque.jpg')} style={{ width: Dimensions.get('window').width, height: 145 }} >
                         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderWidth: 0, borderColor: '#ffffff', backgroundColor: 'rgba(62, 186, 73, 0.46)', justifyContent: 'center', alignItems: 'center' }}>
-                            <TouchableOpacity onPress={() => this.callGps()} >
+                            <TouchableOpacity onPress={() => this.fetchLocation()} >
                                 <MaterialIcons name='refresh' size={30} color='#fff' />
                             </TouchableOpacity>
                         </View>
@@ -1079,21 +1167,21 @@ class CategoryTourPackage extends Component {
             }
         }
 
-        if (this.state.isLoading) {
-            return (
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#FF9D00" />
-                    <Text style={{ paddingTop: 10 }}>Loading ...</Text>
-                </View>
-            )
-        } else {
+        // if (this.state.isLoading) {
+        //     return (
+        //         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        //             <ActivityIndicator size="large" color="#FF9D00" />
+        //             <Text style={{ paddingTop: 10 }}>Loading ...</Text>
+        //         </View>
+        //     )
+        // } else {
 
 
-            return (
-                <MenuProvider>
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                        <View style={{ flex: 1, alignItems: 'center' }}>
-                            {/* <View style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', padding: 10 }}>
+        return (
+            <MenuProvider>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    <View style={{ flex: 1, alignItems: 'center' }}>
+                        {/* <View style={{ flexDirection: 'row', alignItems: 'stretch', justifyContent: 'center', padding: 10 }}>
                         <TouchableOpacity onPress={this.onKategoriPressed}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                                 <Icon
@@ -1116,66 +1204,66 @@ class CategoryTourPackage extends Component {
                             </View>
                         </TouchableOpacity>
                     </View> */}
-                            {boxLogin}
-                            {boxProfile}
-                            {/* box panel jam info solat*/}
-                            {boxInfoSolat}
-                            {/* box menu  */}
-                            <View style={{ width: Dimensions.get('window').width, marginTop: 45, paddingHorizontal: 22 }} >
-                                <View style={{ width: '100%', flexDirection: 'row', alignItems: "center", justifyContent: 'space-between', paddingHorizontal: 5 }} >
-                                    <View >
-                                        <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', borderWidth: 0 }} onPress={() => this.omMenuClick('cheria-holidays.JadwalSolat', 'Jadwal Sholat')}>
-                                            <Image source={require('../../assets/iconMenu/masjid.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
-                                            <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Jadwal Sholat</TextNormal>
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View style={{ borderRightWidth: 1, height: 57, borderColor: '#E3E5E5' }} />
-                                    <View >
-                                        <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => this.omMenuClick('cheria-holidays.Geolocation', 'Kiblat Sholat')}>
-                                            <Image source={require('../../assets/iconMenu/kiblat.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
-                                            <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Kiblat</TextNormal>
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View style={{ borderRightWidth: 1, height: 57, borderColor: '#E3E5E5' }} />
-                                    <View >
-                                        <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => this.omMenuClick('cheria-holidays.PetaMasjid', 'Lokasi Masjid')} >
-                                            <Image source={require('../../assets/iconMenu/islamic-mosque.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
-                                            <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Masjid</TextNormal>
-                                        </TouchableOpacity>
-                                    </View>
+                        {boxLogin}
+                        {boxProfile}
+                        {/* box panel jam info solat*/}
+                        {boxInfoSolat}
+                        {/* box menu  */}
+                        <View style={{ width: Dimensions.get('window').width, marginTop: 45, paddingHorizontal: 22 }} >
+                            <View style={{ width: '100%', flexDirection: 'row', alignItems: "center", justifyContent: 'space-between', paddingHorizontal: 5 }} >
+                                <View >
+                                    <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center', borderWidth: 0 }} onPress={() => this.omMenuClick('cheria-holidays.JadwalSolat', 'Jadwal Sholat')}>
+                                        <Image source={require('../../assets/iconMenu/masjid.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
+                                        <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Jadwal Sholat</TextNormal>
+                                    </TouchableOpacity>
                                 </View>
-                                <View style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'space-between', paddingHorizontal: 15 }}>
-                                    <View style={{ borderBottomWidth: 1, width: 50, borderColor: '#E3E5E5' }} />
-                                    <View />
-                                    <View style={{ borderBottomWidth: 1, width: 50, borderColor: '#E3E5E5' }} />
-                                    <View />
-                                    <View style={{ borderBottomWidth: 1, width: 50, borderColor: '#E3E5E5' }} />
+                                <View style={{ borderRightWidth: 1, height: 57, borderColor: '#E3E5E5' }} />
+                                <View >
+                                    <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => this.omMenuClick('cheria-holidays.Geolocation', 'Kiblat Sholat')}>
+                                        <Image source={require('../../assets/iconMenu/kiblat.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
+                                        <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Kiblat</TextNormal>
+                                    </TouchableOpacity>
                                 </View>
-                                <View style={{ width: '100%', flexDirection: 'row', alignItems: "center", justifyContent: 'space-between', marginTop: 20, paddingHorizontal: 5 }} >
-                                    <View >
-                                        <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => this.omMenuClick('cheria-holidays.PetaRestoran', 'Restoran Halal')}  >
-                                            <Image source={require('../../assets/iconMenu/resto.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
-                                            <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Restoran</TextNormal>
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View style={{ borderRightWidth: 1, height: 57, borderColor: '#E3E5E5' }} />
-                                    <View >
-                                        <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => this.omMenuClick("cheria-holidays.RequestTour", "Request Tour")}  >
-                                            <Image source={require('../../assets/iconMenu/request.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
-                                            <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Request</TextNormal>
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View style={{ borderRightWidth: 1, height: 57, borderColor: '#E3E5E5' }} />
-                                    <View >
-                                        <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => { }}  >
-                                            <Image source={require('../../assets/iconMenu/airplane.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
-                                            <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Tujuan Wisata</TextNormal>
-                                        </TouchableOpacity>
-                                    </View>
+                                <View style={{ borderRightWidth: 1, height: 57, borderColor: '#E3E5E5' }} />
+                                <View >
+                                    <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => this.omMenuClick('cheria-holidays.PetaMasjid', 'Lokasi Masjid')} >
+                                        <Image source={require('../../assets/iconMenu/islamic-mosque.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
+                                        <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Masjid</TextNormal>
+                                    </TouchableOpacity>
                                 </View>
                             </View>
-                            {/* box request dan order */}
-                            {/* <View style={{ width: Dimensions.get('window').width, marginTop: 20, paddingHorizontal: 10 }} >
+                            <View style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'space-between', paddingHorizontal: 15 }}>
+                                <View style={{ borderBottomWidth: 1, width: 50, borderColor: '#E3E5E5' }} />
+                                <View />
+                                <View style={{ borderBottomWidth: 1, width: 50, borderColor: '#E3E5E5' }} />
+                                <View />
+                                <View style={{ borderBottomWidth: 1, width: 50, borderColor: '#E3E5E5' }} />
+                            </View>
+                            <View style={{ width: '100%', flexDirection: 'row', alignItems: "center", justifyContent: 'space-between', marginTop: 20, paddingHorizontal: 5 }} >
+                                <View >
+                                    <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => this.omMenuClick('cheria-holidays.PetaRestoran', 'Restoran Halal')}  >
+                                        <Image source={require('../../assets/iconMenu/resto.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
+                                        <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Restoran</TextNormal>
+                                    </TouchableOpacity>
+                                </View>
+                                <View style={{ borderRightWidth: 1, height: 57, borderColor: '#E3E5E5' }} />
+                                <View >
+                                    <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => this.omMenuClick("cheria-holidays.RequestTour", "Request Tour")}  >
+                                        <Image source={require('../../assets/iconMenu/request.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
+                                        <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Request</TextNormal>
+                                    </TouchableOpacity>
+                                </View>
+                                <View style={{ borderRightWidth: 1, height: 57, borderColor: '#E3E5E5' }} />
+                                <View >
+                                    <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }} onPress={() => this.omMenuClick("cheria-holidays.CategoryTour", "Kategori Tour")}  >
+                                        <Image source={require('../../assets/iconMenu/airplane.png')} resizeMode='contain' style={{ height: 73, width: 73 }} />
+                                        <TextNormal style={{ color: '#2BB04C', fontSize: 12, marginTop: 3 }}>Tujuan Wisata</TextNormal>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                        {/* box request dan order */}
+                        {/* <View style={{ width: Dimensions.get('window').width, marginTop: 20, paddingHorizontal: 10 }} >
                             <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <TouchableOpacity style={{ paddingVertical: 35, width: '48%', alignItems: 'center', justifyContent: 'center', borderRadius: 5, backgroundColor: '#2BB04C' }} onPress={() => this.omMenuClick("cheria-holidays.PaymentRecord", "Pembelian / Pembayaran")}>
                                     <Ico name='invoice' size={30} color='#fff' />
@@ -1188,24 +1276,24 @@ class CategoryTourPackage extends Component {
                             </View>
                         </View> */}
 
-                            {/* pilih region */}
-                            <View style={{ width: Dimensions.get('window').width, marginTop: 20 }} >
+                        {/* pilih region */}
+                        {/* <View style={{ width: Dimensions.get('window').width, marginTop: 20 }} >
                                 <TextSemiBold style={{ color: '#404040', fontSize: 18, paddingLeft: 10 }}>Region Area</TextSemiBold>
                                 <TextNormal style={{ color: '#404040', fontSize: 14, paddingLeft: 10, marginBottom: 10 }}>Pilih Tujuan Wisata berdasarkan ketentuan</TextNormal>
                                 {this.renderRegion()}
-                            </View>
-                            {/* pilih kategori */}
-                            <View style={{ width: Dimensions.get('window').width, marginTop: 20 }} >
+                            </View> */}
+                        {/* pilih kategori */}
+                        {/* <View style={{ width: Dimensions.get('window').width, marginTop: 20 }} >
                                 <TextSemiBold style={{ color: '#404040', fontSize: 18, paddingLeft: 10 }}>Kategori</TextSemiBold>
                                 <TextNormal style={{ color: '#404040', fontSize: 14, paddingLeft: 10, marginBottom: 10 }}>Pilih Tujuan Wisata berdasarkan ketentuan</TextNormal>
                                 {this.renderMain()}
-                            </View>
-                        </View>
-                    </ScrollView >
-                </MenuProvider>
-            )
-        };
-    }
+                            </View> */}
+                    </View>
+                </ScrollView >
+            </MenuProvider>
+        )
+    };
+    // }
 }
 
 const mapStateToProps = state => {
@@ -1227,6 +1315,6 @@ const mapDispatchToProps = dispatch => {
     };
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(CategoryTourPackage);
+export default connect(mapStateToProps, mapDispatchToProps)(MainMenu);
 
 

@@ -9,6 +9,7 @@ import { PermissionsAndroid } from 'react-native';
 import LocationServicesDialogBox from "react-native-android-location-services-dialog-box";
 import ProgressiveImage from "../../components/UI/ProgressiveImage/ProgressiveImage"
 import { TextSemiBold, TextNormal, TextMedium } from '../../components/UI/TextCustom/TextCustom';
+import { requestLokasiGoogle } from "../../store/actions";
 
 class GeolocationExample extends Component {
   constructor(props) {
@@ -58,15 +59,16 @@ class GeolocationExample extends Component {
       //     this.setState({ isCameraLoading: false })
       //     console.log("im presses")
       //     break;
-      case 'didAppear':
-        this.startCompass()
 
-        if (this.state.latitude == null && this.state.longitude == null) {
-          this.aktifKompas()
-          console.log('lokasi aktif')
-        } else {
-          console.log(' lokasi kompastidak perlu aktif')
-        }
+      case 'didAppear':
+        // this.startCompass()
+
+        // if (this.state.latitude == null && this.state.longitude == null) {
+        //   this.aktifKompas()
+        //   console.log('lokasi aktif')
+        // } else {
+        //   console.log(' lokasi kompastidak perlu aktif')
+        // }
 
         console.log("kompas active")
         break;
@@ -80,59 +82,42 @@ class GeolocationExample extends Component {
 
   }
 
-  componentWillMount() {
-    // this.aktifKompas()
-    // LocationServicesDialogBox.checkLocationServicesIsEnabled({
-    //   message: "<h2>Use Location ?</h2>This app wants to change your device settings:<br/><br/>Use GPS, Wi-Fi, and cell network for location<br/><br/><a href='#'>Learn more</a>",
-    //   ok: "YES",
-    //   cancel: "NO",
-    //   enableHighAccuracy: false, // true => GPS AND NETWORK PROVIDER, false => GPS OR NETWORK PROVIDER
-    //   showDialog: true, // false => Opens the Location access page directly
-    //   openLocationServices: true, // false => Directly catch method is called if location services are turned off
-    //   preventOutSideTouch: true, //true => To prevent the location services popup from closing when it is clicked outside
-    //   preventBackClick: true, //true => To prevent the location services popup from closing when it is clicked back button
-    //   providerListener: true // true ==> Trigger "locationProviderStatusChange" listener when the location state changes
-    // }).then(function (success) {
-    //   // success => {alreadyEnabled: true, enabled: true, status: "enabled"} 
-    //   navigator.geolocation.getCurrentPosition((position) => {
-    //     let initialPosition = JSON.stringify(position);
-    //     console.log("ini hasilnya", position.coords.longitude)
-    //     this.setState({ longitude: position.coords.longitude, latitude: position.coords.latitude, isLoading: false });
-    //     this.startCompass()
-    //   }, error => {
-    //     console.log(error)
-    //     Alert.alert(
-    //       'Lokasi tidak ditemukan',
-    //       'Coba kembali',
-    //       [
-    //         { text: 'OK', onPress: () => this.props.navigator.dismissAllModals({ animationType: 'slide-down' }) },
-    //       ],
-    //       // { cancelable: false }
-    //     )
-    //   }, { enableHighAccuracy: false, timeout: 20000, maximumAge: 1000 });
-    // }.bind(this)
-    // ).catch((error) => {
-    //   Alert.alert(
-    //     'Lokasi tidak ditemukan',
-    //     'Coba kembali',
-    //     [
-    //       { text: 'OK', onPress: () => this.props.navigator.dismissAllModals({ animationType: 'slide-down' }) },
-    //     ],
-    //     // { cancelable: false }
-    //   )
-    //   console.log(error.message);
-    // });
+  componentWillMount = async () => {
+    var that = this;
 
-    // DeviceEventEmitter.addListener('locationProviderStatusChange', function (status) { // only trigger when "providerListener" is enabled
-    //   if (status === "disabled") {
-    //     alert("Harus mengaktifkan GPS");
-    //   }
-    //   console.log(status); //  status => {enabled: false, status: "disabled"} or {enabled: true, status: "enabled"}
-    // });
+    Promise.all([
+      latitude = await AsyncStorage.getItem('ap:latitude').then((value) => {
+        return value
+      }),
+      longitude = await AsyncStorage.getItem('ap:longitude').then((value) => {
+        return value
+      })
+    ]).then(function (values) {
+      console.log('latitude', values[0]);
+      console.log('longitude', values[1]);
+      if (values[0] == null && values[1] == null) {
+        that.aktifKompas()
+        console.log('lokasi aktif')
+      } else {
+        console.log(' lokasi kompastidak perlu aktif')
+        that.setState({ latitude: values[0], longitude: values[1] }) // set lat lon
+        AsyncStorage.getItem('ap:kota').then((value) => {
+          if (value == null || typeof (value) === 'undefined') {
+            that.getKotaUseGoogle(values[0], values[1]) // belum ada kota cari kota
+          }
+          else {
+            that.setState({ kota: value, isLoading: false }); // sudah ada kota di asyncstorage
+          }
+        })
+        // that.getKota(values[0], values[1])
+        that.startCompass()
+      }
+    });
   }
 
   componentWillUnmount() {
     // used only when "providerListener" is enabled
+    // console.log('kepanggil')
     LocationServicesDialogBox.stopListener(); // Stop the "locationProviderStatusChange" listener.
   }
 
@@ -164,11 +149,41 @@ class GeolocationExample extends Component {
       .then(parsedRes => {
         console.log('parsedRes', parsedRes)
         // console.log('parsedRes.city', parsedRes.city)
-        this.setState({ kota: parsedRes.city, staddress: parsedRes.staddress })
+        this.setState({ kota: parsedRes.city, staddress: parsedRes.staddress, isLoading: false })
 
       }).catch(err => {
         console.log(err);
         Alert.alert("Gagal", "Error accessing Halal Traveler");
+      })
+  }
+
+  getKotaUseGoogle = (lat, lon) => {
+    this.props.onSetLokasiGoogle(lat, lon) //set kota
+      .then(response => {
+        console.log('onSetLokasiGoogle ', response)
+        if (typeof (response) === "undefined") {
+          console.log('response undefined, ', response)
+        }
+        else {
+          const results = response.results;
+          for (var i = 0; i < results.length; i++) {
+
+            if (results[i].types[0] === "locality") {
+              this.setState({
+                kota: (results[i].address_components[0].short_name),
+                isLoading: false
+              });
+              // console.log(this.state.city)
+              console.log("ini ", (results[i].address_components[0].short_name).toLowerCase())
+            }
+            else if (results[i].types[0] === "administrative_area_level_2") {
+              this.setState({
+                kota: (results[i].address_components[0].short_name),
+                isLoading: false
+              });
+            }
+          }
+        }
       })
   }
 
@@ -256,10 +271,11 @@ class GeolocationExample extends Component {
         console.log("ini hasilnya", position.coords.longitude)
         this.setState({ longitude: position.coords.longitude, latitude: position.coords.latitude, isLoading: false });
         // AsyncStorage.setItem("ap:auth:token", parsedRes.auth_token)
-        AsyncStorage.setItem("app:longitude", position.coords.longitude.toString())
-        AsyncStorage.setItem("app:latitude", position.coords.latitude.toString())
+        // AsyncStorage.setItem("app:longitude", position.coords.longitude.toString())
+        // AsyncStorage.setItem("app:latitude", position.coords.latitude.toString())
         this.startCompass()
-        this.getKota(position.coords.latitude, position.coords.longitude)
+        this.getKotaUseGoogle(position.coords.latitude, position.coords.longitude)
+        // this.getKota(position.coords.latitude, position.coords.longitude)
       }, error => {
         console.log(error)
         this.aktifKompas()
@@ -278,7 +294,13 @@ class GeolocationExample extends Component {
         'Lokasi tidak ditemukan',
         'Coba kembali',
         [
-          { text: 'OK', onPress: () => this.props.navigator.switchToTab({ tabIndex: 0 }) },
+          // { text: 'OK', onPress: () => this.props.navigator.switchToTab({ tabIndex: 0 }) },
+          {
+            text: 'OK', onPress: () =>
+              this.props.navigator.dismissModal({
+                animationType: 'fade' // 'none' / 'slide-down' , dismiss animation for the modal (optional, default 'slide-down')
+              })
+          },
         ],
         // { cancelable: false }
       )
@@ -336,7 +358,7 @@ class GeolocationExample extends Component {
       // false
     ) {
       return (
-        <View style={{ flex: 1, }}>
+        <View style={{ flex: 1, backgroundColor: '#f6f6f6', }}>
 
           <View style={{ width: deviceWidth, paddingHorizontal: 16, marginTop: 12 }}>
             <View style={{ width: '100%', borderWidth: 0.1, borderRadius: 5, flexDirection: 'row', backgroundColor: '#ffffff' }}>
@@ -367,13 +389,14 @@ class GeolocationExample extends Component {
         //   <Text>Longitude: {this.state.longitude}</Text>
         //   {this.state.error ? <Text>Error: {this.state.error}</Text> : null} */}
         // </View>
-        <ScrollView>
+        <ScrollView style={{ backgroundColor: '#f6f6f6' }} >
           <View style={{
             flex: 1,
             // alignItems: 'center',
             justifyContent: 'space-between',
             // backgroundColor: "white",
-            borderWidth: 0
+            borderWidth: 0,
+            backgroundColor: '#f6f6f6'
           }}>
 
             <View style={{ width: deviceWidth, borderWidth: 0 }}>
@@ -392,7 +415,7 @@ class GeolocationExample extends Component {
               <View style={{ width: deviceWidth, paddingHorizontal: 16, marginTop: 9, marginBottom: 30 }}>
                 <View style={{ width: '100%', paddingHorizontal: 22, paddingVertical: 6, backgroundColor: '#ffffff', borderRadius: 5 }}>
                   <TextNormal style={{ color: '#757575', fontSize: 12 }}>Location</TextNormal>
-                  <TextSemiBold style={{ color: '#3EBA49', fontSize: 14, marginTop: 9, width: '100%' }}>{this.state.staddress !== '' ? this.state.staddress + ',' : null} {this.state.kota}</TextSemiBold>
+                  <TextSemiBold style={{ color: '#3EBA49', fontSize: 14, marginTop: 9, width: '100%' }}>{/*this.state.staddress !== '' ? this.state.staddress + ',' : null*/} {this.state.kota}</TextSemiBold>
                 </View>
               </View>
 
@@ -453,4 +476,9 @@ class GeolocationExample extends Component {
 const deviceWidth = Dimensions.get('window').width
 const deviceHeight = Dimensions.get('window').height
 
-export default connect(null, null)(GeolocationExample);
+const mapDispatchToProps = dispatch => {
+  return {
+    onSetLokasiGoogle: (lat, lon) => dispatch(requestLokasiGoogle(lat, lon)),
+  };
+};
+export default connect(null, mapDispatchToProps)(GeolocationExample);
